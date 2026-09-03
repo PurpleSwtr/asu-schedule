@@ -1,5 +1,7 @@
 const NOTES_KEY = 'asu-schedule-notes'
 
+export const DAY_NOTE_PARA = 0
+
 export interface LessonNote {
   text: string
   icon: string
@@ -27,6 +29,15 @@ const NOTE_ICONS = [
   'i-lucide-zap',
   'i-lucide-heart',
   'i-lucide-flag',
+  'i-lucide-party-popper',
+  'i-lucide-cake',
+  'i-lucide-gift',
+  'i-lucide-heart-handshake',
+  'i-lucide-smile',
+  'i-lucide-music-2',
+  'i-lucide-coffee',
+  'i-lucide-utensils',
+  'i-lucide-trophy',
 ]
 
 const NOTE_COLORS = [

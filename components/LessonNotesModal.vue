@@ -4,7 +4,7 @@ import type { LessonNote } from '~/composables/useLessonNotes'
 import { noteColorStyle } from '~/composables/useLessonNotes'
 
 const props = defineProps<{
-  lesson: Lesson
+  lesson?: Lesson | null
   date: string
   notes: LessonNote[]
   open: boolean
@@ -39,10 +39,14 @@ const add = () => {
     <template #content>
       <div class="p-4">
         <div class="flex items-center justify-between mb-1">
-          <span class="font-semibold text-sm">{{ lesson.paraNumber }} пара · {{ lesson.subject }}</span>
+          <span class="font-semibold text-sm">
+            {{ lesson ? `${lesson.paraNumber} пара · ${lesson.subject}` : 'Заметка на день' }}
+          </span>
           <UButton icon="i-lucide-x" color="neutral" variant="ghost" size="sm" @click="emit('update:open', false)" />
         </div>
-        <p class="text-xs text-(--ui-text-muted) mb-4">{{ date }} · {{ lesson.teacher }} · {{ lesson.room }}</p>
+        <p class="text-xs text-(--ui-text-muted) mb-4">
+          {{ date }}{{ lesson ? ` · ${lesson.teacher} · ${lesson.room}` : '' }}
+        </p>
 
         <div v-if="notes.length" class="space-y-2 mb-4">
           <div

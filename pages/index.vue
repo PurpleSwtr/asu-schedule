@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { Lesson } from "~/composables/useSchedule"
 import type { LessonNote } from "~/composables/useLessonNotes"
+import { DAY_NOTE_PARA, noteColorStyle } from "~/composables/useLessonNotes"
 import { Swiper, SwiperSlide } from "swiper/vue"
 import "swiper/css"
 
@@ -39,29 +40,41 @@ const calendarOpen = ref(false)
 const notesOpen = ref(false)
 const activeLesson = ref<Lesson | null>(null)
 const activeDate = ref("")
+const activePara = ref<number | null>(null)
 const activeNotes = ref<LessonNote[]>([])
 
 const openNotes = (lesson: Lesson, date: string) => {
   activeLesson.value = lesson
   activeDate.value = date
+  activePara.value = lesson.paraNumber
   activeNotes.value = getNotes(date, lesson.paraNumber)
   notesOpen.value = true
 }
 
+const openDayNotes = (date: string) => {
+  activeLesson.value = null
+  activeDate.value = date
+  activePara.value = DAY_NOTE_PARA
+  activeNotes.value = getNotes(date, DAY_NOTE_PARA)
+  notesOpen.value = true
+}
+
+const dayNotes = (date: string) => getNotes(date, DAY_NOTE_PARA)
+
 const refreshNotes = () => {
-  if (!activeLesson.value) return
-  activeNotes.value = getNotes(activeDate.value, activeLesson.value.paraNumber)
+  if (activePara.value === null) return
+  activeNotes.value = getNotes(activeDate.value, activePara.value)
 }
 
 const handleAddNote = (note: LessonNote) => {
-  if (!activeLesson.value) return
-  addNote(activeDate.value, activeLesson.value.paraNumber, note)
+  if (activePara.value === null) return
+  addNote(activeDate.value, activePara.value, note)
   refreshNotes()
 }
 
 const handleRemoveNote = (index: number) => {
-  if (!activeLesson.value) return
-  removeNote(activeDate.value, activeLesson.value.paraNumber, index)
+  if (activePara.value === null) return
+  removeNote(activeDate.value, activePara.value, index)
   refreshNotes()
 }
 
@@ -109,7 +122,7 @@ const scheduleSlides = computed(() =>
     name: d.name,
     date: d.date,
     slots: getDaySlots(d.name),
-  }))
+  })),
 )
 
 const selectedIndex = computed(() => {
@@ -121,16 +134,55 @@ const onSwiper = (swiper: any) => {
   scheduleSwiper.value = swiper
 }
 
+let lastRealIndex: number | null = null
+let programmaticNav = false
+
 const onSlideChange = (swiper: any) => {
-  const day = DAY_TABS[swiper.activeIndex]
-  if (day) setDay(day)
+  const cur = swiper.realIndex ?? swiper.activeIndex
+  const day = DAY_TABS[cur]
+  if (!day) return
+
+  if (programmaticNav) {
+    programmaticNav = false
+    lastRealIndex = cur
+    setDay(day)
+    return
+  }
+
+  if (lastRealIndex !== null) {
+    // Sunday (6) -> Monday (0): advance to next week
+    if (lastRealIndex === 6 && cur === 0) {
+      setWeek(currentWeek.value + 1)
+      lastRealIndex = cur
+      scheduleSwiper.value?.update()
+      return
+    }
+    // Monday (0) -> Sunday (6): go back to previous week
+    if (lastRealIndex === 0 && cur === 6) {
+      setWeek(currentWeek.value - 1)
+      lastRealIndex = cur
+      scheduleSwiper.value?.update()
+      return
+    }
+  }
+
+  lastRealIndex = cur
+  setDay(day)
 }
 
 watch(
   selectedIndex,
   (idx) => {
-    if (scheduleSwiper.value && scheduleSwiper.value.activeIndex !== idx) {
-      scheduleSwiper.value.slideTo(idx, 300)
+    const s = scheduleSwiper.value
+    if (!s) return
+    const real = s.realIndex ?? s.activeIndex
+    if (real !== idx) {
+      programmaticNav = true
+      if (typeof s.slideToLoop === "function") {
+        s.slideToLoop(idx, 300)
+      } else {
+        s.slideTo(idx, 300)
+      }
     }
   },
   { flush: "post" },
@@ -138,9 +190,7 @@ watch(
 </script>
 
 <template>
-  <div
-    class="h-dvh flex flex-col overflow-hidden"
-  >
+  <div class="h-dvh flex flex-col overflow-hidden">
     <AppHeader
       :calendar-open="calendarOpen"
       @toggle-calendar="calendarOpen = !calendarOpen"
@@ -165,9 +215,15 @@ watch(
       </template>
 
       <template v-else>
-        <div
-          class="flex-1 min-h-0 flex flex-col lg:justify-center lg:items-center"
+        <Transition
+          appear
+          enter-active-class="transition ease-out duration-500"
+          enter-from-class="opacity-0 translate-y-3"
+          enter-to-class="opacity-100 translate-y-0"
         >
+          <div
+            class="flex-1 min-h-0 flex flex-col lg:justify-center lg:items-center"
+          >
           <div
             class="w-full lg:max-w-3xl flex flex-col min-h-0 lg:min-h-0 lg:max-h-[92dvh]"
           >
@@ -207,6 +263,7 @@ watch(
                 :initial-slide="selectedIndex"
                 :speed="300"
                 :auto-height="false"
+                :loop="true"
                 class="h-full"
                 @swiper="onSwiper"
                 @slide-change="onSlideChange"
@@ -237,12 +294,96 @@ watch(
                           <BreakCard v-else :slot="slot" />
                         </template>
                       </template>
-                      <UCard v-else class="text-center py-8">
+                      <UCard
+                        v-else-if="slide.name === 'Воскресенье'"
+                        class="relative py-6 pt-10 text-center"
+                      >
+                        <UButton
+                          icon="i-lucide-plus"
+                          color="neutral"
+                          variant="outline"
+                          size="sm"
+                          class="absolute top-2 right-2"
+                          @click="openDayNotes(slide.date)"
+                        />
+                        <div
+                          class="mx-auto mb-3 flex items-center justify-center h-14 w-14 rounded-full bg-(--ui-primary-100)"
+                        >
+                          <UIcon
+                            name="i-lucide-party-popper"
+                            class="h-7 w-7 text-(--ui-primary)"
+                          />
+                        </div>
+                        <p class="text-lg font-semibold text-(--ui-text)">
+                          Выходной!
+                        </p>
+                        <p class="text-sm text-(--ui-text-muted) mt-1">
+                          Отдыхайте и набирайтесь сил.
+                        </p>
+
+                        <p class="text-xs text-(--ui-text-muted) mt-5">
+                          ( А то сессия скоро, так-то )
+                        </p>
+
+                        <div
+                          v-if="dayNotes(slide.date).length"
+                          class="mt-4 space-y-2 text-left max-w-md mx-auto"
+                        >
+                          <div
+                            v-for="(n, ni) in dayNotes(slide.date)"
+                            :key="ni"
+                            class="flex items-start gap-2 border rounded-lg px-3 py-2"
+                            :style="noteColorStyle(n.color)"
+                          >
+                            <UIcon
+                              :name="n.icon"
+                              class="h-4 w-4 shrink-0 mt-0.5 text-(--ui-text-muted)"
+                            />
+                            <p
+                              class="text-sm flex-1 break-words whitespace-pre-wrap"
+                            >
+                              {{ n.text }}
+                            </p>
+                          </div>
+                        </div>
+                      </UCard>
+                      <UCard v-else class="relative py-8 pt-10 text-center">
+                        <UButton
+                          icon="i-lucide-plus"
+                          color="neutral"
+                          variant="outline"
+                          size="sm"
+                          class="absolute top-2 right-2"
+                          @click="openDayNotes(slide.date)"
+                        />
                         <UIcon
                           name="i-lucide-calendar-x"
                           class="mx-auto mb-2 h-6 w-6 text-(--ui-text-muted)"
                         />
-                        <p class="text-(--ui-text-muted)">В этот день пар нет</p>
+                        <p class="text-(--ui-text-muted)">
+                          В этот день пар нет
+                        </p>
+                        <div
+                          v-if="dayNotes(slide.date).length"
+                          class="mt-4 space-y-2 text-left max-w-md mx-auto"
+                        >
+                          <div
+                            v-for="(n, ni) in dayNotes(slide.date)"
+                            :key="ni"
+                            class="flex items-start gap-2 border rounded-lg px-3 py-2"
+                            :style="noteColorStyle(n.color)"
+                          >
+                            <UIcon
+                              :name="n.icon"
+                              class="h-4 w-4 shrink-0 mt-0.5 text-(--ui-text-muted)"
+                            />
+                            <p
+                              class="text-sm flex-1 break-words whitespace-pre-wrap"
+                            >
+                              {{ n.text }}
+                            </p>
+                          </div>
+                        </div>
                       </UCard>
                     </div>
                   </div>
@@ -285,6 +426,7 @@ watch(
             </div>
           </div>
         </div>
+        </Transition>
       </template>
     </template>
 
@@ -310,7 +452,6 @@ watch(
     </UModal>
 
     <LessonNotesModal
-      v-if="activeLesson"
       :lesson="activeLesson"
       :date="activeDate"
       :notes="activeNotes"

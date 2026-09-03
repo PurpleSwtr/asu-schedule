@@ -44,9 +44,42 @@ const ANNOUNCEMENTS: Announcement[] = [
     id: "swipe-days",
     type: "modal",
     title: "Свайпы!",
-    message:
-      "Листайте расписание влево-вправо, чтобы менять день недели. Всё для удобства!",
-    icon: "i-lucide-unfold-horizontal",
+    items: [
+      {
+        icon: "i-lucide-unfold-horizontal",
+        title: "Свайп",
+        message:
+          "Листайте расписание влево-вправо, чтобы менять день недели. Всё для удобства!",
+      },
+      {
+        icon: "i-lucide-chart-spline",
+        title: "Плавность",
+        message: "Добавлена плавная анимация при загрузке, а также при свайпах",
+      },
+      {
+        icon: "i-lucide-sparkles",
+        title: "Эффект конфетти!",
+        message: "Ну а почему нет?",
+      },
+    ],
+  },
+  {
+    id: "day-notes-and-icons",
+    type: "modal",
+    title: "Заметки на любой день!",
+    items: [
+      {
+        icon: "i-lucide-party-popper",
+        title: "Заметки в выходные и пустые дни",
+        message:
+          "Теперь можно добавлять заметки даже в дни без пар. Отмечайте дни рождения одногруппников или свои планы!",
+      },
+      {
+        icon: "i-lucide-gift",
+        title: "Больше иконок для заметок",
+        message: "Выбор иконок вырос. Чтобы блин, было не скучно блин.",
+      },
+    ],
   },
 ]
 
