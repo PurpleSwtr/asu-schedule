@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import type { Lesson } from "~/composables/useSchedule"
 import type { LessonNote } from "~/composables/useLessonNotes"
+import { Swiper, SwiperSlide } from "swiper/vue"
+import "swiper/css"
+
+const scheduleSwiper = ref<any>(null)
 
 const { currentView } = useAppView()
 
@@ -11,6 +15,7 @@ const {
   currentDay,
   currentWeekData,
   daySchedule,
+  getDaySlots,
   weekDaysWithDates,
   getWeekTypeLabel,
   loadSchedule,
@@ -23,11 +28,6 @@ const { load: loadNotes, getNotes, addNote, removeNote } = useLessonNotes()
 
 onMounted(async () => {
   await Promise.all([loadSchedule(), loadNotes()])
-})
-
-const currentDate = computed(() => {
-  const entry = weekDaysWithDates.value.find((d) => d.name === currentDay.value)
-  return entry?.date || ""
 })
 
 const handleWeekChange = () => {
@@ -102,56 +102,44 @@ const dismissNotesHint = () => {
   showNotesHint.value = false
 }
 
-let touchStartX = 0
-let touchStartY = 0
-let locked = false
-let isHorizontal = false
+const DAY_TABS = days.value
 
-const onTouchStart = (e: TouchEvent) => {
-  if (currentView.value !== "schedule") return
-  touchStartX = e.touches[0].clientX
-  touchStartY = e.touches[0].clientY
-  locked = false
-  isHorizontal = false
+const scheduleSlides = computed(() =>
+  weekDaysWithDates.value.map((d) => ({
+    name: d.name,
+    date: d.date,
+    slots: getDaySlots(d.name),
+  }))
+)
+
+const selectedIndex = computed(() => {
+  const idx = DAY_TABS.indexOf(currentDay.value)
+  return idx >= 0 ? idx : 0
+})
+
+const onSwiper = (swiper: any) => {
+  scheduleSwiper.value = swiper
 }
 
-const onTouchMove = (e: TouchEvent) => {
-  if (currentView.value !== "schedule") return
-  if (locked) return
-  const dx = e.touches[0].clientX - touchStartX
-  const dy = e.touches[0].clientY - touchStartY
-  if (Math.abs(dx) > 8 && Math.abs(dx) > Math.abs(dy) * 1.5) {
-    isHorizontal = true
-    locked = true
-  } else if (Math.abs(dy) > 8) {
-    locked = true
-    isHorizontal = false
-  }
+const onSlideChange = (swiper: any) => {
+  const day = DAY_TABS[swiper.activeIndex]
+  if (day) setDay(day)
 }
 
-const onTouchEnd = (e: TouchEvent) => {
-  if (currentView.value !== "schedule") return
-  if (!isHorizontal) return
-  const dx = e.changedTouches[0].clientX - touchStartX
-  if (Math.abs(dx) > 30) {
-    const idx = days.indexOf(currentDay.value)
-    if (idx >= 0) {
-      const dir = dx < 0 ? 1 : -1
-      const next = idx + dir
-      if (next >= 0 && next < days.length) {
-        setDay(days[next])
-      }
+watch(
+  selectedIndex,
+  (idx) => {
+    if (scheduleSwiper.value && scheduleSwiper.value.activeIndex !== idx) {
+      scheduleSwiper.value.slideTo(idx, 300)
     }
-  }
-}
+  },
+  { flush: "post" },
+)
 </script>
 
 <template>
   <div
     class="h-dvh flex flex-col overflow-hidden"
-    @touchstart.passive="onTouchStart"
-    @touchmove.passive="onTouchMove"
-    @touchend="onTouchEnd"
   >
     <AppHeader
       :calendar-open="calendarOpen"
@@ -212,7 +200,54 @@ const onTouchEnd = (e: TouchEvent) => {
               <DayTabs />
             </div>
 
-            <div class="flex-1 min-h-0 overflow-y-auto px-4 pt-1 pb-6 relative">
+            <div class="flex-1 min-h-0 relative">
+              <Swiper
+                :modules="[]"
+                :slides-per-view="1"
+                :initial-slide="selectedIndex"
+                :speed="300"
+                :auto-height="false"
+                class="h-full"
+                @swiper="onSwiper"
+                @slide-change="onSlideChange"
+              >
+                <SwiperSlide
+                  v-for="slide in scheduleSlides"
+                  :key="slide.name"
+                  class="h-full"
+                >
+                  <div class="h-full overflow-y-auto px-4 pt-1 pb-6">
+                    <div class="space-y-3 max-w-3xl mx-auto pb-2">
+                      <template v-if="slide.slots.length > 0">
+                        <template
+                          v-for="slot in slide.slots"
+                          :key="
+                            'break' in slot && slot.type === 'break'
+                              ? `break-${slot.fromPara}-${slot.toPara}`
+                              : `lesson-${'paraNumber' in slot ? slot.paraNumber : 0}`
+                          "
+                        >
+                          <LessonCard
+                            v-if="'subject' in slot"
+                            :lesson="slot"
+                            :date="slide.date"
+                            :notes="getNotes(slide.date, slot.paraNumber)"
+                            @open-notes="openNotes(slot, slide.date)"
+                          />
+                          <BreakCard v-else :slot="slot" />
+                        </template>
+                      </template>
+                      <UCard v-else class="text-center py-8">
+                        <UIcon
+                          name="i-lucide-calendar-x"
+                          class="mx-auto mb-2 h-6 w-6 text-(--ui-text-muted)"
+                        />
+                        <p class="text-(--ui-text-muted)">В этот день пар нет</p>
+                      </UCard>
+                    </div>
+                  </div>
+                </SwiperSlide>
+              </Swiper>
               <Transition
                 enter-active-class="transition ease-out duration-300"
                 enter-from-class="opacity-0 translate-y-1"
@@ -247,34 +282,6 @@ const onTouchEnd = (e: TouchEvent) => {
                   </div>
                 </div>
               </Transition>
-              <div class="space-y-3 max-w-3xl mx-auto pb-2">
-                <template v-if="daySchedule.length > 0">
-                  <template
-                    v-for="slot in daySchedule"
-                    :key="
-                      'break' in slot && slot.type === 'break'
-                        ? `break-${slot.fromPara}-${slot.toPara}`
-                        : `lesson-${'paraNumber' in slot ? slot.paraNumber : 0}`
-                    "
-                  >
-                    <LessonCard
-                      v-if="'subject' in slot"
-                      :lesson="slot"
-                      :date="currentDate"
-                      :notes="getNotes(currentDate, slot.paraNumber)"
-                      @open-notes="openNotes(slot, currentDate)"
-                    />
-                    <BreakCard v-else :slot="slot" />
-                  </template>
-                </template>
-                <UCard v-else class="text-center py-8">
-                  <UIcon
-                    name="i-lucide-calendar-x"
-                    class="mx-auto mb-2 h-6 w-6 text-(--ui-text-muted)"
-                  />
-                  <p class="text-(--ui-text-muted)">В этот день пар нет</p>
-                </UCard>
-              </div>
             </div>
           </div>
         </div>

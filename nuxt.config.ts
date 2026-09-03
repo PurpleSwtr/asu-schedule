@@ -29,7 +29,7 @@ export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   compatibilityVersion: 3,
   devtools: { enabled: true },
-  modules: ['@nuxt/ui'],
+  modules: ['@nuxt/ui', '@nuxt/scripts'],
   css: ['~/assets/css/main.css'],
   ssr: false,
   colorMode: {

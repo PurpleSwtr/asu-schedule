@@ -396,9 +396,9 @@ export const useSchedule = () => {
     return scheduleData.value.groups[currentGroup.value]?.monthlySchedule || {}
   })
 
-  const daySchedule = computed<ScheduleSlot[]>(() => {
+  const buildSlots = (dayName: string): ScheduleSlot[] => {
     if (!groupDays.value || !currentWeekType.value) return []
-    const lessons = groupDays.value[currentDay.value] || []
+    const lessons = groupDays.value[dayName] || []
     const filtered = lessons
       .filter((l) =>
         isVisibleInWeek(l, currentWeek.value, currentWeekType.value),
@@ -426,7 +426,11 @@ export const useSchedule = () => {
       slots.push(lesson)
     }
     return slots
-  })
+  }
+
+  const daySchedule = computed<ScheduleSlot[]>(() => buildSlots(currentDay.value))
+
+  const getDaySlots = (dayName: string): ScheduleSlot[] => buildSlots(dayName)
 
   const hasMonthlyWarning = (groupId: string): boolean => {
     if (!scheduleData.value) return false
@@ -562,6 +566,7 @@ export const useSchedule = () => {
     days,
     weekDaysWithDates,
     daySchedule,
+    getDaySlots,
     loadSchedule,
     setGroup,
     setWeek,
