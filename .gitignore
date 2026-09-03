@@ -30,5 +30,4 @@ Thumbs.db
 .myu_parser_tmp/
 
 # Parser scratch / dev data
-utils/names changer/
 madi_groups.json
