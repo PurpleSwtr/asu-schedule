@@ -1,0 +1,24 @@
+{
+  "groups": [
+    {
+      "id": "4бАСУ1",
+      "file": "4bASU1.json"
+    },
+    {
+      "id": "4бАСУ2",
+      "file": "4bASU2.json"
+    },
+    {
+      "id": "4бИТС1",
+      "file": "4бITS1.json"
+    },
+    {
+      "id": "4бИТС2",
+      "file": "4бITS2.json"
+    },
+    {
+      "id": "4бИТС3",
+      "file": "4бITS3.json"
+    }
+  ]
+}

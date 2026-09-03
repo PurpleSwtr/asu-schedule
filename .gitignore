@@ -1,0 +1,34 @@
+# Dependencies
+node_modules/
+
+# Nuxt build
+.nuxt/
+.output/
+dist/
+
+# Build outputs
+*.log
+
+# Env
+.env
+.env.*
+!.env.example
+
+# Editor / OS
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# Temp / cache
+.tmp/
+.cache/
+*.tsbuildinfo
+
+# Parser temp
+.myu_parser_tmp/
+
+# Parser scratch / dev data
+utils/names changer/
+madi_groups.json
