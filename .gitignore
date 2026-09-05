@@ -25,6 +25,8 @@ Thumbs.db
 .tmp/
 .cache/
 *.tsbuildinfo
+__pycache__/
+*.pyc
 
 # Parser temp
 .myu_parser_tmp/
