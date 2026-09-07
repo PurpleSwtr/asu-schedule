@@ -4,6 +4,8 @@ import type { Announcement } from "~/composables/useAnnouncements"
 const toast = useToast()
 const { init, pendingModals, pendingToasts, markSeen } = useAnnouncements()
 const { fire } = useConfetti()
+const { init: initAppSettings, showTutorials } = useAppSettings()
+const { init: initFirstLaunch } = useFirstLaunch()
 
 const currentModal = ref<Announcement | null>(null)
 const modalQueue = ref<Announcement[]>([])
@@ -92,8 +94,15 @@ watch(currentModal, (modal) => {
   }
 })
 
+watch(showTutorials, (v) => {
+  if (!v) currentModal.value = null
+})
+
 onMounted(() => {
   init()
+  initAppSettings()
+  initFirstLaunch()
+  if (!showTutorials.value) return
   queueModals()
   queueToasts()
 })

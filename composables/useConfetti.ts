@@ -1,4 +1,4 @@
-import type JSConfetti from "js-confetti"
+import JSConfetti from "js-confetti"
 
 export interface ConfettiOptions {
   emojis?: string[]
@@ -16,50 +16,34 @@ const CONFETTI_COLORS = [
   "#ec4899",
 ]
 
+let instance: JSConfetti | null = null
+
 export const useConfetti = () => {
-  if (import.meta.server) {
-    return { fire: async () => {} }
+  const getInstance = () => {
+    if (import.meta.server) return null
+    if (!instance) {
+      instance = new JSConfetti()
+    }
+    return instance
   }
-
-  let resolveReady: ((k: JSConfetti) => void) | null = null
-  const ready = new Promise<JSConfetti>((r) => {
-    resolveReady = r
-  })
-
-  const { onLoaded, onError } = useScriptNpm({
-    packageName: "js-confetti",
-    file: "dist/js-confetti.browser.js",
-    version: "0.13.1",
-    scriptOptions: {
-      use() {
-        return { JSConfetti: (window as any).JSConfetti }
-      },
-    },
-  })
-
-  onLoaded(({ JSConfetti: Klass }: { JSConfetti: typeof JSConfetti }) => {
-    resolveReady?.(new Klass())
-  })
-  onError(() => {
-    /* quietly ignore script load failures */
-  })
 
   const fire = async (options: ConfettiOptions = {}) => {
     try {
-      const instance = await ready
+      const confetti = getInstance()
+      if (!confetti) return
       const emojis = options.emojis ?? []
       const colorCount = options.colorCount ?? 40
       const emojiCount = options.emojiCount ?? 6
       const emojiSize = options.emojiSize ?? 64
 
-      instance.addConfetti({
+      confetti.addConfetti({
         confettiColors: CONFETTI_COLORS,
         confettiNumber: colorCount,
         confettiRadius: 4,
         emojis: [],
       })
       if (emojis.length > 0) {
-        instance.addConfetti({
+        confetti.addConfetti({
           emojis,
           confettiNumber: emojiCount,
           emojiSize,

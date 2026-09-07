@@ -117,6 +117,17 @@ function getFirstWeekMonday(): Date {
   return getMondayOfWeek(new Date(SEMESTER_START + "T00:00:00"))
 }
 
+function getRealWeekNumber(date: Date = new Date()): number {
+  const firstMonday = getFirstWeekMonday()
+  firstMonday.setHours(0, 0, 0, 0)
+  const now = new Date(date)
+  now.setHours(0, 0, 0, 0)
+  const diffDays = Math.floor(
+    (now.getTime() - firstMonday.getTime()) / (1000 * 60 * 60 * 24),
+  )
+  return Math.floor(diffDays / 7) + 1
+}
+
 const currentGroup = ref("4бАСУ1")
 const currentWeek = ref(1)
 const currentDay = ref(DAYS_ORDER[0])
@@ -328,18 +339,12 @@ export const useSchedule = () => {
         currentGroup.value = savedGroup
       }
 
-      const now = new Date()
-      const firstMonday = getFirstWeekMonday()
-      firstMonday.setHours(0, 0, 0, 0)
-      const diffDays = Math.floor(
-        (now.getTime() - firstMonday.getTime()) / (1000 * 60 * 60 * 24),
-      )
-      const weekNum = Math.floor(diffDays / 7) + 1
+      const weekNum = getRealWeekNumber()
       if (weekNum >= 1 && weekNum <= 18) {
         currentWeek.value = weekNum
       }
 
-      const dayIdx = (now.getDay() + 6) % 7
+      const dayIdx = (new Date().getDay() + 6) % 7
       currentDay.value = DAYS_ORDER[dayIdx]
     } catch (e) {
       error.value = "Ошибка загрузки расписания"
@@ -372,6 +377,8 @@ export const useSchedule = () => {
   const currentWeekType = computed<"numerator" | "denominator" | null>(() => {
     return currentWeekData.value?.type || null
   })
+
+  const realWeekNumber = computed(() => getRealWeekNumber())
 
   const days = computed(() => DAYS_ORDER)
 
@@ -564,6 +571,7 @@ export const useSchedule = () => {
     weeks,
     currentWeekData,
     currentWeekType,
+    realWeekNumber,
     days,
     weekDaysWithDates,
     daySchedule,

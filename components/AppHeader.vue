@@ -1,40 +1,8 @@
 <script setup lang="ts">
-const emit = defineEmits(["toggleCalendar"])
+const emit = defineEmits(["toggleCalendar", "toggleSettings"])
 defineProps<{ calendarOpen: boolean }>()
 
-const colorMode = useColorMode()
-const { currentColor, availableColors, setColor } = useAccentColor()
 const { currentView, setView } = useAppView()
-
-const colorModeItems = [
-  [
-    {
-      label: "Светлая",
-      icon: "i-lucide-sun",
-      onSelect: () => {
-        colorMode.preference = "light"
-      },
-    },
-  ],
-  [
-    {
-      label: "Тёмная",
-      icon: "i-lucide-moon",
-      onSelect: () => {
-        colorMode.preference = "dark"
-      },
-    },
-  ],
-  [
-    {
-      label: "Система",
-      icon: "i-lucide-monitor",
-      onSelect: () => {
-        colorMode.preference = "system"
-      },
-    },
-  ],
-]
 
 const menuItems = computed(() => [
   [
@@ -59,12 +27,14 @@ const viewLabel = computed(() =>
 
 // One-time tooltip for the new calendar in menu
 const { tooltipsEnabled } = useFirstLaunch()
+const { init: initAppSettings, showTutorials } = useAppSettings()
 const MENU_TOOLTIP_KEY = 'asu-menu-tooltip-seen'
 const showMenuTooltip = ref(false)
 const menuTooltipTimer = ref<ReturnType<typeof setTimeout> | null>(null)
 
 const maybeShowMenuTooltip = () => {
   if (import.meta.server) return
+  if (!showTutorials.value) return
   if (localStorage.getItem(MENU_TOOLTIP_KEY)) return
   menuTooltipTimer.value = setTimeout(() => {
     showMenuTooltip.value = true
@@ -72,11 +42,12 @@ const maybeShowMenuTooltip = () => {
   }, 1500)
 }
 
-watch(tooltipsEnabled, (v) => {
+watch([tooltipsEnabled, showTutorials], (v) => {
   if (v) maybeShowMenuTooltip()
 })
 
 onMounted(() => {
+  initAppSettings()
   if (tooltipsEnabled.value) maybeShowMenuTooltip()
 })
 
@@ -146,47 +117,6 @@ onBeforeUnmount(() => {
         </Transition>
       </div>
       <div class="flex items-center gap-1 shrink-0">
-        <UPopover :ui="{ content: 'w-56 p-3' }">
-          <UButton
-            icon="i-lucide-palette"
-            color="neutral"
-            variant="ghost"
-            size="sm"
-          />
-          <template #content>
-            <p class="text-xs font-semibold text-(--ui-text-muted) mb-2 px-1">
-              Акцентный цвет
-            </p>
-            <div class="grid grid-cols-6 gap-2">
-              <button
-                v-for="c in availableColors"
-                :key="c.value"
-                class="relative w-7 h-7 rounded-full transition-transform hover:scale-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-(--ui-text) focus-visible:ring-offset-1"
-                :style="{ backgroundColor: c.hex }"
-                :title="c.label"
-                @click="setColor(c.value)"
-              >
-                <UIcon
-                  v-if="currentColor === c.value"
-                  name="i-lucide-check"
-                  class="absolute inset-0 m-auto h-4 w-4 text-white drop-shadow-sm"
-                />
-              </button>
-            </div>
-          </template>
-        </UPopover>
-
-        <UDropdownMenu :items="colorModeItems" :ui="{ content: 'w-40' }">
-          <UButton
-            :icon="
-              colorMode.value === 'dark' ? 'i-lucide-moon' : 'i-lucide-sun'
-            "
-            color="neutral"
-            variant="ghost"
-            size="sm"
-          />
-        </UDropdownMenu>
-
         <UButton
           v-if="currentView === 'schedule'"
           icon="i-lucide-calendar-days"
@@ -195,10 +125,15 @@ onBeforeUnmount(() => {
           size="sm"
           @click="emit('toggleCalendar')"
         />
+        <UButton
+          icon="i-lucide-settings"
+          color="neutral"
+          variant="ghost"
+          size="sm"
+          aria-label="Настройки"
+          @click="emit('toggleSettings')"
+        />
       </div>
-    </div>
-    <div v-if="currentView === 'schedule'" class="px-4 pb-3">
-      <GroupSelector />
     </div>
   </header>
 </template>

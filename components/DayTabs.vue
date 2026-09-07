@@ -21,14 +21,16 @@ const selectedIndex = computed(() => {
 const scrollEl = ref<HTMLElement | null>(null)
 const btnEls = ref<HTMLElement[]>([])
 
-const scrollActiveIntoView = async () => {
+const scrollActiveIntoView = async (behavior: ScrollBehavior = 'smooth') => {
   await nextTick()
   const el = btnEls.value[selectedIndex.value]
   if (!el) return
-  el.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' })
+  el.scrollIntoView({ behavior, inline: 'center', block: 'nearest' })
 }
 
 watch(selectedIndex, () => scrollActiveIntoView())
+
+onMounted(() => scrollActiveIntoView('auto'))
 
 const onUpdate = (index: number) => {
   const day = days.value[index]

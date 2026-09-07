@@ -38,6 +38,9 @@ export const availableColors = Object.keys(PALETTES).map(key => ({
   hex: PALETTES[key][500],
 }))
 
+export const accentHex = (name: string, shade = 500) =>
+  PALETTES[name]?.[String(shade)] ?? "#6b7280"
+
 const currentColor = ref('green')
 
 const SHADES = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950]

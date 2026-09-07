@@ -15,13 +15,22 @@ const emit = defineEmits<{
 }>()
 
 const { TIME_SLOTS } = useSchedule()
+const { styleForType, categoryForType, styleForSchedule } = useBadgeColors()
+
+const typeCategory = computed(() => categoryForType(props.lesson.type))
+const typeStyle = computed(() =>
+  typeCategory.value ? styleForType(props.lesson.type) : null,
+)
 
 const scheduleLabel = computed(() => {
   switch (props.lesson.schedule) {
-    case 'числитель': return { text: 'Числитель', color: 'primary' as const }
-    case 'знаменатель': return { text: 'Знаменатель', color: 'secondary' as const }
-    case 'месяц': return { text: '1 раз в месяц', color: 'warning' as const }
-    case 'полныйдень': return { text: 'Полнодневное', color: 'error' as const }
+    case 'числитель':
+      return { text: 'Числитель', style: styleForSchedule('числитель') }
+    case 'знаменатель':
+      return { text: 'Знаменатель', style: styleForSchedule('знаменатель') }
+    case 'месяц':
+      return { text: '1 раз в месяц', style: styleForSchedule('месяц') }
+    case 'полныйдень': return { text: 'Полнодневное', style: null }
     default: return null
   }
 })
@@ -39,20 +48,49 @@ const timeRange = computed(() => {
           <UBadge color="neutral" variant="soft" class="shrink-0">
             {{ lesson.paraNumber }} пара
           </UBadge>
-          <span class="text-sm text-gray-500 whitespace-nowrap">{{ timeRange }}</span>
+          <span class="text-sm text-(--ui-text-muted) whitespace-nowrap">{{ timeRange }}</span>
           <UBadge
-            v-if="scheduleLabel"
-            :color="scheduleLabel.color"
+            v-if="scheduleLabel && !scheduleLabel.style"
+            color="error"
             variant="soft"
             class="shrink-0"
           >
             {{ scheduleLabel.text }}
           </UBadge>
+          <UBadge
+            v-else-if="scheduleLabel"
+            color="neutral"
+            variant="soft"
+            class="shrink-0"
+            :style="scheduleLabel.style"
+          >
+            {{ scheduleLabel.text }}
+          </UBadge>
         </div>
         <div class="font-semibold text-base mb-1 break-words">{{ lesson.subject }}</div>
-        <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-gray-600">
-          <span class="break-words">{{ lesson.type }}</span>
-          <span v-if="lesson.teacher" class="text-gray-400 break-words">{{ lesson.teacher }}</span>
+        <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-(--ui-text)">
+          <UBadge
+            v-if="typeStyle"
+            color="neutral"
+            variant="soft"
+            class="shrink-0"
+            :style="typeStyle"
+          >
+            <template v-if="typeCategory?.icon" #leading>
+              <UIcon :name="typeCategory.icon" class="h-3.5 w-3.5" />
+            </template>
+            {{ lesson.type }}
+          </UBadge>
+          <UBadge
+            v-else
+            color="neutral"
+            variant="soft"
+            class="shrink-0"
+          >{{ lesson.type }}</UBadge>
+          <span
+            v-if="lesson.teacher"
+            class="text-sm text-(--ui-text-muted) break-words"
+          >{{ lesson.teacher }}</span>
         </div>
       </div>
       <div class="flex items-start gap-2 shrink-0">

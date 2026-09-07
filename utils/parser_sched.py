@@ -8,6 +8,18 @@ from bs4 import BeautifulSoup
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
+def normalize_type(t) -> str:
+    """Чистит строку типа занятия: выравнивает пробелы и оформление вокруг '/'.
+
+    'Практические занятия /семинар/' -> 'Практические занятия / семинар'
+    """
+    if not t:
+        return t or ""
+    raw = str(t).replace("\n", " ")
+    parts = [" ".join(p.split()) for p in raw.split("/")]
+    return " / ".join(p for p in parts if p)
+
+
 def get_schedule_as_json(group_name: str, group_id: str) -> dict:
     url = "https://raspisanie.madi.ru/tplan/tasks/tableFiller.php"
 
@@ -61,7 +73,7 @@ def get_schedule_as_json(group_name: str, group_id: str) -> dict:
                         "day": cols[0].text.strip(),
                         "time": "Полный день",
                         "subject": cols[1].text.strip(),
-                        "type": "Полнодневное занятие",
+                        "type": normalize_type("Полнодневное занятие"),
                         "periodicity": cols[2].text.strip(),
                         "room": "-",
                         "teacher": "-",
@@ -74,7 +86,7 @@ def get_schedule_as_json(group_name: str, group_id: str) -> dict:
                     "day": current_day,
                     "time": cols[0].text.strip(),
                     "subject": cols[1].text.strip(),
-                    "type": cols[2].text.strip(),
+                    "type": normalize_type(cols[2].text),
                     "periodicity": cols[3].text.strip(),
                     "room": cols[4].text.strip(),
                     "teacher": cols[5].text.strip().replace("\n", " ").strip(),

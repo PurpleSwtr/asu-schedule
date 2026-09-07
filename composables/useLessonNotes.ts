@@ -98,5 +98,19 @@ export const useLessonNotes = () => {
     }
   }
 
-  return { allNotes, load, getNotes, addNote, removeNote, NOTE_ICONS, NOTE_COLORS, noteColorStyle }
+  const updateNote = (
+    date: string,
+    paraNumber: number,
+    index: number,
+    note: LessonNote,
+  ) => {
+    const key = makeKey(date, paraNumber)
+    const arr = allNotes.value[key]
+    if (arr && arr[index]) {
+      arr.splice(index, 1, note)
+      save()
+    }
+  }
+
+  return { allNotes, load, getNotes, addNote, removeNote, updateNote, NOTE_ICONS, NOTE_COLORS, noteColorStyle }
 }

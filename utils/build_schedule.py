@@ -46,7 +46,7 @@ MANIFEST_FILE = PUBLIC_DIR / "groups-manifest.json"
 sys.path.insert(0, str(UTILS_DIR))
 
 from parser_groups import get_all_groups  # noqa: E402
-from parser_sched import get_schedule_as_json  # noqa: E402
+from parser_sched import get_schedule_as_json, normalize_type  # noqa: E402
 from translit import translit  # noqa: E402
 
 FULL_NAMES_FILE = RESOLVER_DIR / "full_names.txt"
@@ -379,6 +379,11 @@ def main() -> None:
         if not parsed:
             continue
         data = parsed.get("data", [])
+
+        # Нормализация типов занятий (защитное дублирование парсерной чистки:
+        # применяем ко всем данным, даже если они пришли уже обработанными)
+        for lesson in data:
+            lesson["type"] = normalize_type(lesson.get("type"))
 
         # Этап 3: слияние с monthlySchedule
         print(f"[Этап 3] Сливаю monthlySchedule для {group_id}...")

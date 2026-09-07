@@ -13,6 +13,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'update:open', v: boolean): void
   (e: 'add', note: LessonNote): void
+  (e: 'update', index: number, note: LessonNote): void
   (e: 'remove', index: number): void
 }>()
 
@@ -21,15 +22,52 @@ const { NOTE_ICONS, NOTE_COLORS } = useLessonNotes()
 const input = ref('')
 const selectedIcon = ref(NOTE_ICONS[0])
 const selectedColor = ref('blue')
+const editingIndex = ref<number | null>(null)
 
-const add = () => {
+const isEditing = computed(() => editingIndex.value !== null)
+
+watch(() => props.open, (open) => {
+  if (open) {
+    editingIndex.value = null
+    input.value = ''
+    selectedIcon.value = NOTE_ICONS[0]
+    selectedColor.value = 'blue'
+  }
+})
+
+const startEdit = (i: number) => {
+  const note = props.notes[i]
+  if (!note) return
+  editingIndex.value = i
+  input.value = note.text
+  selectedIcon.value = note.icon
+  selectedColor.value = note.color
+}
+
+const cancelEdit = () => {
+  editingIndex.value = null
+  input.value = ''
+  selectedIcon.value = NOTE_ICONS[0]
+  selectedColor.value = 'blue'
+}
+
+const save = () => {
   const text = input.value.trim()
   if (!text) return
-  emit('add', {
-    text,
-    icon: selectedIcon.value,
-    color: selectedColor.value,
-  })
+  if (isEditing.value) {
+    emit('update', editingIndex.value as number, {
+      text,
+      icon: selectedIcon.value,
+      color: selectedColor.value,
+    })
+    editingIndex.value = null
+  } else {
+    emit('add', {
+      text,
+      icon: selectedIcon.value,
+      color: selectedColor.value,
+    })
+  }
   input.value = ''
 }
 </script>
@@ -40,7 +78,11 @@ const add = () => {
       <div class="p-4">
         <div class="flex items-center justify-between mb-1">
           <span class="font-semibold text-sm">
-            {{ lesson ? `${lesson.paraNumber} пара · ${lesson.subject}` : 'Заметка на день' }}
+            {{ isEditing
+              ? 'Редактирование заметки'
+              : lesson
+                ? `${lesson.paraNumber} пара · ${lesson.subject}`
+                : 'Заметка на день' }}
           </span>
           <UButton icon="i-lucide-x" color="neutral" variant="ghost" size="sm" @click="emit('update:open', false)" />
         </div>
@@ -57,7 +99,10 @@ const add = () => {
           >
             <UIcon :name="note.icon" class="h-4 w-4 shrink-0 mt-0.5 text-(--ui-text-muted)" />
             <p class="text-sm flex-1 break-words whitespace-pre-wrap">{{ note.text }}</p>
-            <UButton icon="i-lucide-trash-2" color="error" variant="ghost" size="xs" class="shrink-0 mt-0.5" @click="emit('remove', i)" />
+            <div class="flex items-center gap-0.5 shrink-0 mt-0.5">
+              <UButton icon="i-lucide-pencil" color="neutral" variant="ghost" size="xs" aria-label="Редактировать заметку" @click="startEdit(i)" />
+              <UButton icon="i-lucide-trash-2" color="error" variant="ghost" size="xs" aria-label="Удалить заметку" @click="emit('remove', i)" />
+            </div>
           </div>
         </div>
         <div v-else class="flex flex-col items-center py-4 mb-4">
@@ -100,9 +145,30 @@ const add = () => {
             </div>
           </div>
 
-          <div class="flex gap-2">
-            <UInput v-model="input" placeholder="Новая заметка…" class="flex-1" @keyup.enter="add" />
-            <UButton icon="i-lucide-plus" label="Добавить" @click="add" />
+          <div class="space-y-2">
+            <UInput
+              v-model="input"
+              :placeholder="isEditing ? 'Редактировать заметку…' : 'Новая заметка…'"
+              class="w-full"
+              @keyup.enter="save"
+            />
+            <div class="flex gap-2">
+              <UButton
+                v-if="isEditing"
+                icon="i-lucide-x"
+                color="neutral"
+                variant="outline"
+                label="Отменить"
+                class="flex-1 justify-center"
+                @click="cancelEdit"
+              />
+              <UButton
+                :icon="isEditing ? 'i-lucide-check' : 'i-lucide-plus'"
+                :label="isEditing ? 'Сохранить' : 'Добавить'"
+                class="flex-1 justify-center"
+                @click="save"
+              />
+            </div>
           </div>
         </div>
       </div>
