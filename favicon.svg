@@ -1,0 +1,123 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#123b35"/>
+      <stop offset="100%" stop-color="#071f1c"/>
+    </linearGradient>
+  </defs>
+
+  <!-- ФОН -->
+  <rect
+    x="10"
+    y="10"
+    width="236"
+    height="236"
+    rx="54"
+    fill="url(#bg)"
+    stroke="#10b981"
+    stroke-width="7"
+  />
+
+  <!-- Обёртка для увеличения и центрирования (сдвига выше) -->
+  <g transform="translate(128 130) scale(1.25) translate(-128 -144)">
+
+    <!-- КНИГА -->
+    <g
+      transform="translate(128 143)"
+      fill="none"
+      stroke="#34d399"
+      stroke-width="8"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    >
+
+      <!-- Левая страница -->
+      <path
+        d="
+          M0 -35
+          C-20 -44 -42 -43 -63 -33
+          V47
+          C-42 38 -20 38 0 47
+        "
+      />
+
+      <!-- Правая страница -->
+      <path
+        d="
+          M0 -35
+          C20 -44 42 -43 63 -33
+          V47
+          C42 38 20 38 0 47
+        "
+      />
+
+      <!-- Корешок -->
+      <path
+        d="M0 -35 V47"
+        stroke="#238d70"
+        stroke-width="6"
+      />
+
+    </g>
+
+
+    <!-- СТРОКИ -->
+    <!--
+         Верхние: длинные
+         Нижняя: короткая и смещена к центру
+
+               │
+         ───── │ ─────
+         ───── │ ─────
+           ─── │ ───
+    -->
+
+    <g
+      stroke="#fbbf24"
+      stroke-width="5"
+      stroke-linecap="round"
+    >
+
+      <!-- ЛЕВАЯ СТРАНИЦА -->
+      <line x1="78" y1="133" x2="108" y2="133"/>
+      <line x1="78" y1="149" x2="108" y2="149"/>
+      <line x1="89" y1="165" x2="108" y2="165"/>
+
+      <!-- ПРАВАЯ СТРАНИЦА — ЗЕРКАЛЬНО -->
+      <line x1="148" y1="133" x2="178" y2="133"/>
+      <line x1="148" y1="149" x2="178" y2="149"/>
+      <line x1="148" y1="165" x2="167" y2="165"/>
+
+    </g>
+
+
+    <!-- ЧАСЫ -->
+    <!--
+         Часы непосредственно пересекаются
+         с верхним контуром книги.
+         Никакой рамки или закладки.
+    -->
+
+    <circle
+      cx="128"
+      cy="106"
+      r="19"
+      fill="#123b35"
+      stroke="#fbbf24"
+      stroke-width="6"
+    />
+
+    <!-- Стрелки -->
+    <path
+      d="M128 96 V106 L136 111"
+      fill="none"
+      stroke="#fbbf24"
+      stroke-width="4"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+
+  </g>
+
+</svg>
