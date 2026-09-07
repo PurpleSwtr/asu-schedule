@@ -28,9 +28,11 @@ from __future__ import annotations
 
 import argparse
 import json
+import random
 import re
 import subprocess
 import sys
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -128,8 +130,11 @@ def expand_teacher_name(teacher: str, full_names: list[str]) -> tuple[str, bool]
 
     for full in full_names:
         f_surname, f_initials = surname_and_initials(full)
-        if f_surname and f_initials and f_surname == surname and (
-            f_initials == initials or f_initials.startswith(initials)
+        if (
+            f_surname
+            and f_initials
+            and f_surname == surname
+            and (f_initials == initials or f_initials.startswith(initials))
         ):
             return full, True
 
@@ -137,6 +142,7 @@ def expand_teacher_name(teacher: str, full_names: list[str]) -> tuple[str, bool]
 
 
 # --- Шаг 0 / 1: список групп с сайта и из манифеста ---
+
 
 def fetch_group_id_map() -> dict[str, str]:
     print("=" * 70)
@@ -180,6 +186,7 @@ def load_manifest_groups() -> list[dict[str, str]]:
 
 # --- Шаг 2: парсинг расписания ---
 
+
 def parse_group(gp_name: str, gp_id: str) -> dict:
     print(f"  -> Парсю {gp_name} (gp_id={gp_id})...")
     result = get_schedule_as_json(gp_name, gp_id)
@@ -192,11 +199,14 @@ def parse_group(gp_name: str, gp_id: str) -> dict:
 
 # --- Шаг 3: слияние с monthlySchedule ---
 
+
 def load_monthly(gp_id_name: str) -> dict:
     monthly_file = MONTHLY_DIR / f"{translit(gp_id_name)}.json"
     if not monthly_file.exists():
-        print(f"  [INFO] Нет ручного monthlySchedule для {gp_id_name} "
-              f"(нет utils/monthly/{translit(gp_id_name)}.json)")
+        print(
+            f"  [INFO] Нет ручного monthlySchedule для {gp_id_name} "
+            f"(нет utils/monthly/{translit(gp_id_name)}.json)"
+        )
         return {}
     try:
         monthly = json.loads(monthly_file.read_text(encoding="utf-8"))
@@ -230,6 +240,7 @@ def check_monthly_consistency(data: list[dict], monthly: dict, group_name: str) 
 
 # --- Шаг 4: расширение ФИО ---
 
+
 def expand_names_in_data(data: list[dict], full_names: list[str]) -> int:
     replaced = 0
     unresolved: set[str] = set()
@@ -251,6 +262,7 @@ def expand_names_in_data(data: list[dict], full_names: list[str]) -> int:
 
 
 # --- Шаги 5-6: имена файлов и манифест ---
+
 
 def translit_filename(gp_name: str) -> str:
     return f"{translit(gp_name)}.json"
@@ -288,6 +300,7 @@ def regenerate_manifest(written: list[tuple[str, str]]) -> None:
 
 
 # --- Шаг 7: commit ---
+
 
 def git_commit() -> None:
     stamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -350,9 +363,16 @@ def main() -> None:
         group_id = entry["id"]
         gp_id = id_map.get(group_id)
         if not gp_id:
-            print(f"[WARN] {group_id}: не найден gp_id на сайте — пропускаю "
-                  f"(возможно, группа переименована или недоступна)")
+            print(
+                f"[WARN] {group_id}: не найден gp_id на сайте — пропускаю "
+                f"(возможно, группа переименована или недоступна)"
+            )
             continue
+
+        # задержка между запросами
+        delay = 5.0 + random.uniform(0.0, 2.0)
+        print(f"  [INFO] Пауза {delay:.1f} сек перед запросом для {group_id}...")
+        time.sleep(delay)
 
         # Этап 2: парсинг
         parsed = parse_group(group_id, gp_id)
@@ -399,8 +419,9 @@ def main() -> None:
     if args.commit:
         git_commit()
     else:
-        print("[Этап 7] Пропущен (нет флага --commit). "
-              "Изменения лежат в рабочем дереве.")
+        print(
+            "[Этап 7] Пропущен (нет флага --commit). Изменения лежат в рабочем дереве."
+        )
 
     print("=" * 70)
     print("Готово.")
