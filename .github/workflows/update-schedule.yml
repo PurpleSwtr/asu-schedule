@@ -1,8 +1,8 @@
-name: Update schedules
+name: Build and deploy schedule site
 
 on:
-  schedule:
-    - cron: "0 3 * * 1"
+  push:
+    branches: [main]
   workflow_dispatch:
 
 concurrency:
@@ -10,7 +10,7 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  update:
+  build-and-deploy:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
@@ -19,43 +19,19 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      - name: Install Python dependencies
-        run: pip install requests beautifulsoup4
-
-      - name: Run schedule pipeline
-        run: python utils/build_schedule.py
-
-      - name: Commit and push to main
-        id: auto_commit
-        uses: stefanzweifel/git-auto-commit-action@v5
-        with:
-          commit_message: "chore: update schedules"
-          commit_user_name: AsuScheduleBot
-          commit_user_email: github-actions[bot]@users.noreply.github.com
-          file_pattern: "public/*.json"
-
       - name: Set up Node.js
-        if: steps.auto_commit.outputs.changes_detected == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: "20"
           cache: "npm"
 
       - name: Install dependencies
-        if: steps.auto_commit.outputs.changes_detected == 'true'
         run: npm ci
 
       - name: Build for GitHub Pages
-        if: steps.auto_commit.outputs.changes_detected == 'true'
         run: npm run generate:gh
 
       - name: Deploy to GitHub Pages
-        if: steps.auto_commit.outputs.changes_detected == 'true'
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
