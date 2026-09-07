@@ -29,13 +29,13 @@ const ANNOUNCEMENTS: Announcement[] = [
         icon: "i-lucide-plus",
         title: "Заметки для пар",
         message:
-          "Теперь можно писать заметки к любому занятию. Они видны только вам.",
+          "Теперь можно писать заметки к любому занятию. Они видны только вам",
       },
       {
         icon: "i-lucide-file-text",
         title: "Календарь заметок",
         message:
-          "Все свои заметки можно просматривать по месяцам в отдельном разделе меню.",
+          "Все свои заметки можно просматривать по месяцам в отдельном разделе меню",
       },
     ],
     onClose: () => useFirstLaunch().markOnboardingDone(),
@@ -77,7 +77,7 @@ const ANNOUNCEMENTS: Announcement[] = [
       {
         icon: "i-lucide-gift",
         title: "Больше иконок для заметок",
-        message: "Выбор иконок вырос. Чтобы блин, было не скучно блин.",
+        message: "Выбор иконок вырос. Чтобы было не скучно",
       },
     ],
   },
@@ -90,13 +90,13 @@ const ANNOUNCEMENTS: Announcement[] = [
         icon: "i-lucide-refresh-cw",
         title: "Автообновление по понедельникам",
         message:
-          "Теперь расписание автоматически обновляется каждую неделю в понедельник. (Знаю что вас тоже бесит когда оно меняется...)",
+          "Теперь расписание автоматически обновляется каждую неделю в понедельник",
       },
       {
         icon: "i-lucide-user-check",
         title: "Полные имена преподавателей",
         message:
-          "Имена преподавателей теперь расшифровываются для всех групп из сокращений до полных ФИО.",
+          "Имена преподавателей теперь расшифровываются для всех групп из сокращений до полных ФИО",
       },
     ],
   },
@@ -173,5 +173,12 @@ export const useAnnouncements = () => {
     }
   }
 
-  return { init, pending, pendingToasts, pendingModals, markSeen }
+  return {
+    init,
+    pending,
+    pendingToasts,
+    pendingModals,
+    markSeen,
+    all: ANNOUNCEMENTS,
+  }
 }

@@ -53,6 +53,9 @@ export default defineNuxtConfig({
     baseURL: process.env.GITHUB_PAGES_BASE || "/",
     head: {
       title: "Расписание МАДИ",
+      link: [
+        { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
+      ],
       meta: [
         { name: "viewport", content: "width=device-width, initial-scale=1" },
         {

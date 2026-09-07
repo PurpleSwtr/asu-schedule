@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { BadgeCategory } from "~/composables/useBadgeColors"
 import { accentHex } from "~/composables/useAccentColor"
+import avatar from "~/assets/avatar.webp"
 
 const emit = defineEmits(["update:open"])
 const props = defineProps<{ open: boolean }>()
@@ -16,6 +17,20 @@ const {
 } = useAppSettings()
 const { currentGroup, groups } = useSchedule()
 const { fire: fireConfetti } = useConfetti()
+const toast = useToast()
+
+const handleSetShowTutorials = (v: boolean) => {
+  setShowTutorials(v)
+  if (!v) {
+    toast.add({
+      icon: "i-lucide-heart-crack",
+      color: "info",
+      title: "Уведомления об обновлениях не будут приходить",
+      description: "Грустно… Ведь они специально делаются для вас!",
+      duration: 9000,
+    })
+  }
+}
 
 const testConfetti = () => {
   fireConfetti({
@@ -33,8 +48,10 @@ type Screen =
   | "accent"
   | "colors"
   | "color-picker"
-  | "main"
-  | "groups"
+| "main"
+    | "groups"
+    | "feedback"
+    | "history"
 
 const history = ref<Screen[]>(["root"])
 const transitionName = ref("slide-forward")
@@ -50,6 +67,8 @@ const TITLES: Partial<Record<Screen, string>> = {
   colors: "Цвета для плашек",
   main: "Основное",
   groups: "Выбор группы",
+  feedback: "Обратная связь",
+  history: "История изменений",
 }
 
 const title = computed(() =>
@@ -149,6 +168,18 @@ const rootRows = [
     subtitle: "Тема, акцент, цвета, конфетти",
     icon: "i-lucide-palette",
   },
+{
+    key: "feedback" as Screen,
+    label: "Обратная связь",
+    subtitle: "Звёздочка, контакты, запрос группы",
+    icon: "i-lucide-heart-handshake",
+  },
+  {
+    key: "history" as Screen,
+    label: "История изменений",
+    subtitle: "Что уже появилось",
+    icon: "i-lucide-history",
+  },
 ]
 
 const personalizationRows = computed(() => [
@@ -172,6 +203,9 @@ const personalizationRows = computed(() => [
     icon: "i-lucide-paint-bucket",
   },
 ])
+
+const { all: allAnnouncements } = useAnnouncements()
+const historyList = computed(() => [...allAnnouncements].reverse())
 </script>
 
 <template>
@@ -450,7 +484,7 @@ const personalizationRows = computed(() => [
                   </span>
                   <USwitch
                     :model-value="showTutorials"
-                    @update:model-value="setShowTutorials($event)"
+                    @update:model-value="handleSetShowTutorials($event)"
                   />
                 </div>
               </template>
@@ -459,6 +493,141 @@ const personalizationRows = computed(() => [
               <template v-else-if="screen === 'groups'">
                 <div class="px-1 py-2">
                   <GroupSelector />
+                </div>
+              </template>
+
+              <!-- FEEDBACK -->
+              <template v-else-if="screen === 'feedback'">
+                <div class="space-y-4">
+                  <a
+                    href="https://github.com/PurpleSwtr/asu-schedule"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="w-full flex items-center gap-3 rounded-lg px-2 py-2.5 hover:bg-(--ui-bg-accented) transition-colors text-left"
+                  >
+                    <span
+                      class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-(--ui-primary-100)"
+                    >
+                      <UIcon
+                        name="i-lucide-star"
+                        class="h-5 w-5 text-(--ui-primary)"
+                      />
+                    </span>
+                    <span class="flex-1 min-w-0">
+                      <span class="block text-sm font-medium"
+                        >Репозиторий на GitHub</span
+                      >
+                      <span class="block text-xs text-(--ui-text-muted)">
+                        Пока я тут стараюсь сделать удобное расписание, можете
+                        поставить звёздочку на гитхабе!
+                      </span>
+                    </span>
+                    <UIcon
+                      name="i-lucide-external-link"
+                      class="h-4 w-4 shrink-0 text-(--ui-text-muted)"
+                    />
+                  </a>
+                  <a
+                    href="https://github.com/PurpleSwtr/asu-schedule/issues/new"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="w-full flex items-center gap-3 rounded-lg px-2 py-2.5 hover:bg-(--ui-bg-accented) transition-colors text-left"
+                  >
+                    <span
+                      class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-(--ui-primary-100)"
+                    >
+                      <UIcon
+                        name="i-lucide-message-square-plus"
+                        class="h-5 w-5 text-(--ui-primary)"
+                      />
+                    </span>
+                    <span class="flex-1 min-w-0">
+                      <span class="block text-sm font-medium">
+                        Оставить фидбек
+                      </span>
+                      <span class="block text-xs text-(--ui-text-muted)">
+                        Запросить расписание новой группы / поделиться идеей по
+                        улучшению / сообщить об ошибке
+                      </span>
+                    </span>
+                    <UIcon
+                      name="i-lucide-external-link"
+                      class="h-4 w-4 shrink-0 text-(--ui-text-muted)"
+                    />
+                  </a>
+
+                  <div
+                    class="flex flex-col items-center gap-2 pt-4 mt-2 border-t border-(--ui-border) text-center"
+                  >
+                    <img
+                      :src="avatar"
+                      alt="Аватар автора"
+                      class="h-20 w-20 shrink-0 rounded-full object-cover"
+                    />
+                    <p class="font-semibold">Сергеенко Михаил</p>
+                    <p class="block -mt-1 text-xs text-(--ui-text-muted)">
+                      студент группы 4бАСУ1
+                    </p>
+                    <div class="flex items-center gap-3 mt-1">
+                      <a
+                        href="https://github.com/PurpleSwtr"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label="Мой GitHub"
+                        class="flex h-11 w-11 items-center justify-center rounded-full bg-(--ui-bg-elevated) hover:bg-(--ui-primary-100) transition-colors"
+                      >
+                        <UIcon name="i-lucide-github" class="h-5 w-5" />
+                      </a>
+
+                      <a
+                        href="https://t.me/purpleswtr"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label="Telegram"
+                        class="flex h-11 w-11 items-center justify-center rounded-full bg-(--ui-bg-elevated) hover:bg-(--ui-primary-100) transition-colors"
+                      >
+                        <UIcon name="i-lucide-send" class="h-5 w-5" />
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </template>
+
+              <!-- CHANGELOG -->
+              <template v-else-if="screen === 'history'">
+                <div
+                  class="space-y-3 overflow-y-auto pr-1 pb-2"
+                  style="max-height: calc(100vh - 220px)"
+                >
+                  <div
+                    v-for="ann in historyList"
+                    :key="ann.id"
+                    class="rounded-xl border border-(--ui-border) p-3"
+                  >
+                    <p class="font-semibold text-sm">{{ ann.title }}</p>
+                    <div class="mt-3 space-y-3">
+                      <div
+                        v-for="item in ann.items"
+                        :key="item.title"
+                        class="flex items-start gap-3"
+                      >
+                        <div
+                          class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-(--ui-primary-100)"
+                        >
+                          <UIcon
+                            :name="item.icon"
+                            class="h-4 w-4 text-(--ui-primary)"
+                          />
+                        </div>
+                        <div class="min-w-0">
+                          <p class="text-sm font-medium">{{ item.title }}</p>
+                          <p class="text-xs leading-relaxed text-(--ui-text-muted)">
+                            {{ item.message }}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </template>
             </div>

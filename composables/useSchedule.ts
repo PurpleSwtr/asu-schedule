@@ -21,6 +21,7 @@ export interface Lesson {
   schedule: "числитель" | "знаменатель" | "обе" | "месяц" | "полныйдень"
   day: string
   monthlyKey?: string
+  monthlyType?: "числитель" | "знаменатель"
 }
 
 export interface BreakSlot {
@@ -180,6 +181,13 @@ function mapPeriodicity(p: string): Lesson["schedule"] {
   return "обе"
 }
 
+function mapMonthlyType(p: string): "числитель" | "знаменатель" | undefined {
+  const lower = p.toLowerCase().trim()
+  if (lower.includes("числ") && lower.includes("месяц")) return "числитель"
+  if (lower.includes("знам") && lower.includes("месяц")) return "знаменатель"
+  return undefined
+}
+
 function parseTimeNumber(timeStr: string): number {
   const match = timeStr.match(/(\d{1,2}):(\d{2})/)
   if (!match) return 99
@@ -204,6 +212,10 @@ function buildWeeklySchedule(
         const time = item.time.trim()
         const subject = item.subject.trim()
         const schedule = mapPeriodicity(item.periodicity || "")
+        const monthlyType =
+          schedule === "месяц"
+            ? mapMonthlyType(item.periodicity || "")
+            : undefined
         let monthlyKey: string | undefined
 
         if (schedule === "месяц") {
@@ -224,6 +236,7 @@ function buildWeeklySchedule(
           number: 0,
           paraNumber: resolveParaNumber(time),
           monthlyKey,
+          monthlyType,
         }
       })
       .sort(
@@ -436,7 +449,9 @@ export const useSchedule = () => {
     return slots
   }
 
-  const daySchedule = computed<ScheduleSlot[]>(() => buildSlots(currentDay.value))
+  const daySchedule = computed<ScheduleSlot[]>(() =>
+    buildSlots(currentDay.value),
+  )
 
   const getDaySlots = (dayName: string): ScheduleSlot[] => buildSlots(dayName)
 
@@ -502,15 +517,26 @@ export const useSchedule = () => {
     weekType: "numerator" | "denominator",
   ): boolean => {
     const ms = currentMonthlySchedule.value
+    const hasManualSchedule = Object.keys(ms).length > 0
 
-    if (lesson.monthlyKey && ms[lesson.monthlyKey]) {
-      const entry = ms[lesson.monthlyKey]
-      const interval = entry.intervalWeeks || 4
-      const firstWeek = getWeekNumberForDate(entry.firstDate)
-      if (firstWeek === null) return false
-      if (weekNumber < firstWeek) return false
-      return (weekNumber - firstWeek) % interval === 0
+    // Есть ручное расписание monthly — показываем СТРОГО по нему,
+    // без угадывания. Пары без записи в конфиге не показываем.
+    if (hasManualSchedule) {
+      if (lesson.monthlyKey && ms[lesson.monthlyKey]) {
+        const entry = ms[lesson.monthlyKey]
+        const interval = entry.intervalWeeks || 4
+        const firstWeek = getWeekNumberForDate(entry.firstDate)
+        if (firstWeek === null) return false
+        if (weekNumber < firstWeek) return false
+        return (weekNumber - firstWeek) % interval === 0
+      }
+      return false
     }
+
+    // Нет ручного расписания — показываем месячные пары ВСЕГДА
+    // в недели нужного типа: в числитель — «в числ.», в знаменатель — «в знам.».
+    if (lesson.monthlyType === "числитель") return weekType === "numerator"
+    if (lesson.monthlyType === "знаменатель") return weekType === "denominator"
 
     if (weekType === "numerator" && weekNumber % 4 === 1) return true
     if (weekType === "denominator" && weekNumber % 4 === 3) return true
