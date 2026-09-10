@@ -134,9 +134,15 @@ const transitioning = ref(false)
 const onBeforeEnter = (el: HTMLElement) => {
   transitioning.value = false
   nextTick(() => {
-    const max = window.innerHeight - 140
-    const height = Math.min(el.offsetHeight, Math.max(160, max))
-    containerHeight.value = Math.max(160, height)
+    const natural = el.offsetHeight
+    const cap = Math.max(160, window.innerHeight - 96)
+    if (natural > cap) {
+      el.style.height = "100%"
+      containerHeight.value = cap
+    } else {
+      el.style.height = ""
+      containerHeight.value = natural
+    }
   })
 }
 
@@ -586,7 +592,7 @@ const optionList = computed<UiOption[]>(() => {
 
         <div
           ref="containerEl"
-          class="relative flex flex-col overflow-hidden transition-[height] duration-200 ease-out"
+          class="relative overflow-hidden transition-[height] duration-200 ease-out"
           :class="{ 'transition-none': transitioning }"
           :style="{
             height:
@@ -594,10 +600,7 @@ const optionList = computed<UiOption[]>(() => {
           }"
         >
           <Transition :name="transitionName" @before-enter="onBeforeEnter">
-            <div
-              :key="screen"
-              class="overflow-y-auto pr-1 space-y-1 flex-1 min-h-0"
-            >
+            <div :key="screen" class="overflow-y-auto pr-1 space-y-1">
               <!-- ROOT -->
               <template v-if="screen === 'root'">
                 <button
