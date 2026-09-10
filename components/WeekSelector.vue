@@ -3,14 +3,12 @@ import { computed, nextTick, ref, watch } from "vue"
 
 const { weeks, currentWeek, setWeek, getWeekTypeLabel, realWeekNumber } =
   useSchedule()
-const { currentColor } = useAccentColor()
 
 const pastStyle = (isPast: boolean) => {
   if (!isPast) return undefined
-  const hex = accentHex(currentColor.value)
   return {
-    color: hex,
-    backgroundColor: `color-mix(in srgb, ${hex} 16%, transparent)`,
+    color: 'var(--ui-primary)',
+    backgroundColor: 'var(--ui-color-primary-100)',
   }
 }
 
