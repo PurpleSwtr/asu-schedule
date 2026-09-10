@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { Lesson } from '~/composables/useSchedule'
 import type { LessonNote } from '~/composables/useLessonNotes'
-import { noteColorStyle } from '~/composables/useLessonNotes'
+import { noteColorStyle, noteColorHex } from '~/composables/useLessonNotes'
 
 const props = defineProps<{
   lesson?: Lesson | null
@@ -75,7 +75,10 @@ const save = () => {
 <template>
   <UModal :open="open" @update:open="emit('update:open', $event)">
     <template #content>
-      <div class="p-4">
+      <div
+        class="p-4 overflow-y-auto"
+        style="max-height: min(calc(100dvh - 2rem), 640px)"
+      >
         <div class="flex items-center justify-between mb-1">
           <span class="font-semibold text-sm">
             {{ isEditing
@@ -97,7 +100,11 @@ const save = () => {
             class="flex items-start gap-2 border rounded-lg px-3 py-2"
             :style="noteColorStyle(note.color)"
           >
-            <UIcon :name="note.icon" class="h-4 w-4 shrink-0 mt-0.5 text-(--ui-text-muted)" />
+            <UIcon
+              :name="note.icon"
+              class="h-5 w-5 shrink-0 mt-0.5"
+              :style="{ color: noteColorHex(note.color) }"
+            />
             <p class="text-sm flex-1 break-words whitespace-pre-wrap">{{ note.text }}</p>
             <div class="flex items-center gap-0.5 shrink-0 mt-0.5">
               <UButton icon="i-lucide-pencil" color="neutral" variant="ghost" size="xs" aria-label="Редактировать заметку" @click="startEdit(i)" />
