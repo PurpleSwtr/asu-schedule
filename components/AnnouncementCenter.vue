@@ -7,48 +7,25 @@ const { fire } = useConfetti()
 const { init: initAppSettings, showTutorials } = useAppSettings()
 const { init: initFirstLaunch } = useFirstLaunch()
 
-const currentModal = ref<Announcement | null>(null)
-const modalQueue = ref<Announcement[]>([])
+const currentList = ref<Announcement[] | null>(null)
 const toastTimer = ref<ReturnType<typeof setTimeout> | null>(null)
 
-let shownModals = 0
 let shownToasts = 0
 
 const queueModals = () => {
-  modalQueue.value = pendingModals.value.slice()
-  if (modalQueue.value.length > 0) {
-    shownModals = 0
-    showNextModal()
-  }
-}
-
-const showNextModal = () => {
-  if (shownModals >= modalQueue.value.length) {
-    currentModal.value = null
-    return
-  }
-  const next = modalQueue.value[shownModals]
-  if (next.delay) {
-    setTimeout(
-      () => {
-        currentModal.value = next
-        shownModals++
-      },
-      next.delay * (shownModals + 1),
-    )
-  } else {
-    currentModal.value = next
-    shownModals++
+  const list = pendingModals.value.slice()
+  if (list.length > 0) {
+    currentList.value = list.reverse()
   }
 }
 
 const closeModal = () => {
-  if (currentModal.value) {
-    const ann = currentModal.value
-    ann.onClose?.()
-    markSeen(ann.id)
-    currentModal.value = null
-    showNextModal()
+  if (currentList.value) {
+    for (const ann of currentList.value) {
+      ann.onClose?.()
+      markSeen(ann.id)
+    }
+    currentList.value = null
   }
 }
 
@@ -68,7 +45,6 @@ const queueToasts = () => {
         duration: ann.duration ?? 4000,
         onClick: () => {
           markSeen(ann.id)
-          toast.remove(ann.id)
         },
       })
       markSeen(ann.id)
@@ -83,8 +59,8 @@ const queueToasts = () => {
   showNextToast()
 }
 
-watch(currentModal, (modal) => {
-  if (modal) {
+watch(currentList, (list) => {
+  if (list) {
     fire({
       emojis: ["📅", "🎉", "✨", "🏆", "⭐"],
       emojiCount: 10,
@@ -95,7 +71,7 @@ watch(currentModal, (modal) => {
 })
 
 watch(showTutorials, (v) => {
-  if (!v) currentModal.value = null
+  if (!v) currentList.value = null
 })
 
 onMounted(() => {
@@ -114,7 +90,7 @@ onBeforeUnmount(() => {
 
 <template>
   <UModal
-    :open="currentModal !== null"
+    :open="currentList !== null"
     :ui="{ overlay: 'bg-black/60' }"
     @update:open="
       (v: boolean) => {
@@ -123,9 +99,9 @@ onBeforeUnmount(() => {
     "
   >
     <template #content>
-      <div v-if="currentModal" class="p-5">
+      <div v-if="currentList" class="p-5">
         <div class="flex items-center justify-between mb-4">
-          <span class="text-lg font-bold">{{ currentModal.title }}</span>
+          <span class="text-lg font-bold">Что нового?</span>
           <UButton
             icon="i-lucide-x"
             color="neutral"
@@ -134,35 +110,15 @@ onBeforeUnmount(() => {
             @click="closeModal"
           />
         </div>
-        <div v-if="currentModal.items?.length" class="space-y-4">
-          <div
-            v-for="item in currentModal.items"
-            :key="item.title"
-            class="flex items-start gap-3"
-          >
-            <div
-              class="flex items-center justify-center h-10 w-10 shrink-0 rounded-lg bg-(--ui-primary-100)"
-            >
-              <UIcon :name="item.icon" class="h-5 w-5 text-(--ui-primary)" />
-            </div>
-            <div>
-              <p class="font-semibold text-sm">{{ item.title }}</p>
-              <p class="text-sm text-(--ui-text-muted)">{{ item.message }}</p>
-            </div>
-          </div>
-        </div>
-        <div v-else class="flex items-start gap-3">
-          <div
-            class="flex items-center justify-center h-10 w-10 shrink-0 rounded-lg bg-(--ui-primary-100)"
-          >
-            <UIcon
-              :name="currentModal.icon!"
-              class="h-5 w-5 text-(--ui-primary)"
-            />
-          </div>
-          <p class="text-sm text-(--ui-text-muted)">
-            {{ currentModal.message }}
-          </p>
+        <div
+          class="space-y-3 overflow-y-auto pr-1 pb-2"
+          style="max-height: calc(100vh - 220px)"
+        >
+          <AnnouncementBlock
+            v-for="ann in currentList"
+            :key="ann.id"
+            :announcement="ann"
+          />
         </div>
       </div>
     </template>
