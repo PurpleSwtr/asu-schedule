@@ -1,5 +1,6 @@
 <script setup lang="ts">
 const { init } = useAccentColor()
+const { init: initUiCustomization } = useUiCustomization()
 const { init: initFirstLaunch } = useFirstLaunch()
 const { init: initAppSettings, confettiOnLaunch } = useAppSettings()
 const { init: initBadgeColors } = useBadgeColors()
@@ -7,6 +8,7 @@ const { fire } = useConfetti()
 
 onMounted(() => {
   init()
+  initUiCustomization()
   initFirstLaunch()
   initAppSettings()
   initBadgeColors()
