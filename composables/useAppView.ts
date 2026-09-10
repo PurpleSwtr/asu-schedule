@@ -1,7 +1,7 @@
-const currentView = ref<'schedule' | 'notes'>('schedule')
+const currentView = ref<'schedule' | 'notes' | 'allNotes'>('schedule')
 
 export const useAppView = () => {
-  const setView = (v: 'schedule' | 'notes') => {
+  const setView = (v: 'schedule' | 'notes' | 'allNotes') => {
     currentView.value = v
   }
 

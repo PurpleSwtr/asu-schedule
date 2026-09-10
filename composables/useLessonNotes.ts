@@ -12,8 +12,13 @@ export const noteColorStyle = (colorName: string) => {
   const c = NOTE_COLORS.find(x => x.name === colorName)
   return {
     borderColor: c?.hex || '#9ca3af',
-    backgroundColor: c ? `${c.hex}1a` : '#9ca3af1a',
+    backgroundColor: c ? `${c.hex}2e` : '#9ca3af2e',
   }
+}
+
+export const noteColorHex = (colorName: string): string => {
+  const c = NOTE_COLORS.find(x => x.name === colorName)
+  return c?.hex || '#9ca3af'
 }
 
 const NOTE_ICONS = [
@@ -54,63 +59,63 @@ function makeKey(date: string, paraNumber: number): string {
   return `${date}|${paraNumber}`
 }
 
-export const useLessonNotes = () => {
-  const allNotes = ref<Record<string, LessonNote[]>>({})
+const allNotes = ref<Record<string, LessonNote[]>>({})
 
-  const load = () => {
-    if (import.meta.server) return
-    try {
-      const raw = localStorage.getItem(NOTES_KEY)
-      if (raw) allNotes.value = JSON.parse(raw)
-    } catch {}
+const load = () => {
+  if (import.meta.server) return
+  try {
+    const raw = localStorage.getItem(NOTES_KEY)
+    if (raw) allNotes.value = JSON.parse(raw)
+  } catch {}
+}
+
+const save = () => {
+  if (import.meta.server) return
+  const entries = Object.fromEntries(
+    Object.entries(allNotes.value).filter(([, v]) => v.length > 0)
+  )
+  if (Object.keys(entries).length === 0) {
+    localStorage.removeItem(NOTES_KEY)
+  } else {
+    localStorage.setItem(NOTES_KEY, JSON.stringify(entries))
   }
+}
 
-  const save = () => {
-    if (import.meta.server) return
-    const entries = Object.fromEntries(
-      Object.entries(allNotes.value).filter(([, v]) => v.length > 0)
-    )
-    if (Object.keys(entries).length === 0) {
-      localStorage.removeItem(NOTES_KEY)
-    } else {
-      localStorage.setItem(NOTES_KEY, JSON.stringify(entries))
-    }
-  }
+const getNotes = (date: string, paraNumber: number): LessonNote[] => {
+  return allNotes.value[makeKey(date, paraNumber)] || []
+}
 
-  const getNotes = (date: string, paraNumber: number): LessonNote[] => {
-    return allNotes.value[makeKey(date, paraNumber)] || []
-  }
+const addNote = (date: string, paraNumber: number, note: LessonNote) => {
+  const key = makeKey(date, paraNumber)
+  if (!allNotes.value[key]) allNotes.value[key] = []
+  allNotes.value[key].push(note)
+  save()
+}
 
-  const addNote = (date: string, paraNumber: number, note: LessonNote) => {
-    const key = makeKey(date, paraNumber)
-    if (!allNotes.value[key]) allNotes.value[key] = []
-    allNotes.value[key].push(note)
+const removeNote = (date: string, paraNumber: number, index: number) => {
+  const key = makeKey(date, paraNumber)
+  const arr = allNotes.value[key]
+  if (arr) {
+    arr.splice(index, 1)
+    if (arr.length === 0) delete allNotes.value[key]
     save()
   }
+}
 
-  const removeNote = (date: string, paraNumber: number, index: number) => {
-    const key = makeKey(date, paraNumber)
-    const arr = allNotes.value[key]
-    if (arr) {
-      arr.splice(index, 1)
-      if (arr.length === 0) delete allNotes.value[key]
-      save()
-    }
+const updateNote = (
+  date: string,
+  paraNumber: number,
+  index: number,
+  note: LessonNote,
+) => {
+  const key = makeKey(date, paraNumber)
+  const arr = allNotes.value[key]
+  if (arr && arr[index]) {
+    arr.splice(index, 1, note)
+    save()
   }
+}
 
-  const updateNote = (
-    date: string,
-    paraNumber: number,
-    index: number,
-    note: LessonNote,
-  ) => {
-    const key = makeKey(date, paraNumber)
-    const arr = allNotes.value[key]
-    if (arr && arr[index]) {
-      arr.splice(index, 1, note)
-      save()
-    }
-  }
-
+export const useLessonNotes = () => {
   return { allNotes, load, getNotes, addNote, removeNote, updateNote, NOTE_ICONS, NOTE_COLORS, noteColorStyle }
 }

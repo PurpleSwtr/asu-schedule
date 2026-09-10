@@ -2,7 +2,6 @@
 import { computed } from 'vue'
 import type { Lesson } from '~/composables/useSchedule'
 import type { LessonNote } from '~/composables/useLessonNotes'
-import { noteColorStyle } from '~/composables/useLessonNotes'
 
 const props = defineProps<{
   lesson: Lesson
@@ -112,15 +111,12 @@ const timeRange = computed(() => {
     </div>
 
     <div v-if="notes?.length" class="mt-3 pt-3 border-t border-(--ui-border) space-y-2">
-      <div
+      <NoteBlock
         v-for="(note, i) in notes"
         :key="i"
-        class="flex items-start gap-2 border rounded-lg px-3 py-2"
-        :style="noteColorStyle(note.color)"
-      >
-        <UIcon :name="note.icon" class="h-4 w-4 shrink-0 mt-0.5 text-(--ui-text-muted)" />
-        <p class="text-sm flex-1 break-words">{{ note.text }}</p>
-      </div>
+        :note="note"
+        @click="emit('open-notes')"
+      />
     </div>
   </UCard>
 </template>

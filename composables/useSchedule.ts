@@ -271,6 +271,31 @@ function buildWeeks(
   return weeks
 }
 
+const NOTE_DATE_META: Record<
+  string,
+  { week: number; type: "numerator" | "denominator"; day: string }
+> = (() => {
+  const meta: Record<
+    string,
+    { week: number; type: "numerator" | "denominator"; day: string }
+  > = {}
+  const firstMonday = getFirstWeekMonday()
+  for (let w = 1; w <= 18; w++) {
+    const weekStart = new Date(firstMonday)
+    weekStart.setDate(firstMonday.getDate() + (w - 1) * 7)
+    const type: "numerator" | "denominator" =
+      w % 2 === 1 ? "numerator" : "denominator"
+    for (let i = 0; i < DAYS_ORDER.length; i++) {
+      const d = new Date(weekStart)
+      d.setDate(weekStart.getDate() + i)
+      const dd = d.getDate().toString().padStart(2, "0")
+      const mm = (d.getMonth() + 1).toString().padStart(2, "0")
+      meta[`${dd}.${mm}`] = { week: w, type, day: DAYS_ORDER[i] }
+    }
+  }
+  return meta
+})()
+
 export const useSchedule = () => {
   const toast = useToast()
   const loadSchedule = async () => {
@@ -543,11 +568,6 @@ export const useSchedule = () => {
     return false
   }
 
-  const getTypeOfWeek = (weekNumber: number): "numerator" | "denominator" => {
-    const w = scheduleData.value?.meta.weeks[weekNumber.toString()]
-    return w ? w.type : weekNumber % 2 === 1 ? "numerator" : "denominator"
-  }
-
   const getWeekNumberForDate = (dateStr: string): number | null => {
     if (!scheduleData.value) return null
     const date = new Date(dateStr + "T00:00:00")
@@ -578,7 +598,10 @@ export const useSchedule = () => {
   const selectDate = (date: Date | string) => {
     const d = typeof date === "string" ? new Date(date + "T00:00:00") : date
     if (isNaN(d.getTime())) return
-    const weekNum = getWeekNumberForDate(d.toISOString().slice(0, 10))
+    const y = d.getFullYear()
+    const m = String(d.getMonth() + 1).padStart(2, "0")
+    const day = String(d.getDate()).padStart(2, "0")
+    const weekNum = getWeekNumberForDate(`${y}-${m}-${day}`)
     const dayName = getDayNameForDate(d)
     if (weekNum !== null && weekNum !== undefined) {
       currentWeek.value = weekNum
@@ -594,7 +617,9 @@ export const useSchedule = () => {
     currentWeek,
     currentDay,
     groups,
+    groupDays,
     weeks,
+    noteDateMeta: NOTE_DATE_META,
     currentWeekData,
     currentWeekType,
     realWeekNumber,

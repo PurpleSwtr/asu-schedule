@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { Lesson } from "~/composables/useSchedule"
 import type { LessonNote } from "~/composables/useLessonNotes"
-import { DAY_NOTE_PARA, noteColorStyle } from "~/composables/useLessonNotes"
+import { DAY_NOTE_PARA } from "~/composables/useLessonNotes"
 import { Swiper, SwiperSlide } from "swiper/vue"
 import "swiper/css"
 
@@ -65,6 +65,14 @@ const openDayNotes = (date: string) => {
 }
 
 const dayNotes = (date: string) => getNotes(date, DAY_NOTE_PARA)
+
+const openNotesForDate = (date: string, para: number) => {
+  activeLesson.value = null
+  activeDate.value = date
+  activePara.value = para
+  activeNotes.value = getNotes(date, para)
+  notesOpen.value = true
+}
 
 const refreshNotes = () => {
   if (activePara.value === null) return
@@ -211,7 +219,13 @@ watch(
       @toggle-settings="settingsOpen = true"
     />
 
-    <NotesCalendar v-if="currentView === 'notes'" class="flex-1 min-h-0" />
+    <NotesCalendar
+      v-if="currentView === 'notes'"
+      class="flex-1 min-h-0"
+      @open="openNotesForDate"
+    />
+
+    <NotesBySubject v-else-if="currentView === 'allNotes'" class="flex-1 min-h-0" />
 
     <template v-else>
       <template v-if="isLoading || error">
@@ -291,7 +305,7 @@ watch(
                           class="py-6 pt-10 text-center"
                         >
                           <div
-                            class="mx-auto mb-3 flex items-center justify-center h-14 w-14 rounded-full bg-(--ui-primary-100)"
+                            class="mx-auto mb-3 flex items-center justify-center h-14 w-14 rounded-full bg-(--ui-color-primary-100)"
                           >
                             <UIcon
                               name="i-lucide-party-popper"
@@ -319,22 +333,13 @@ watch(
                           </p>
                         </UCard>
 
-<div
+<NoteBlock
                         v-for="(n, ni) in dayNotes(slide.date)"
                         :key="`day-note-${ni}`"
-                        class="flex items-start gap-2 border rounded-lg px-3 py-2"
-                        :style="noteColorStyle(n.color)"
-                      >
-                        <UIcon
-                          :name="n.icon"
-                          class="h-4 w-4 shrink-0 mt-0.5 text-(--ui-text-muted)"
-                        />
-                        <p
-                          class="text-sm flex-1 break-words whitespace-pre-wrap"
-                        >
-                          {{ n.text }}
-                        </p>
-                      </div>
+                        :note="n"
+                        class="cursor-pointer"
+                        @click="openDayNotes(slide.date)"
+                      />
 
                         <UButton
                           icon="i-lucide-plus"

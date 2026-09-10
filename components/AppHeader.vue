@@ -8,22 +8,46 @@ const menuItems = computed(() => [
   [
     {
       label: "Расписание",
-      icon: "i-lucide-calendar-days",
+      icon: "i-lucide-graduation-cap",
       active: currentView.value === "schedule",
       onSelect: () => setView("schedule"),
     },
     {
       label: "Календарь заметок",
-      icon: "i-lucide-file-text",
+      icon: "i-lucide-calendar-days",
       active: currentView.value === "notes",
       onSelect: () => setView("notes"),
+    },
+    {
+      label: "Заметки по предметам",
+      icon: "i-lucide-book-marked",
+      active: currentView.value === "allNotes",
+      onSelect: () => setView("allNotes"),
     },
   ],
 ])
 
-const viewLabel = computed(() =>
-  currentView.value === "schedule" ? "Расписание" : "Календарь заметок",
-)
+const viewLabel = computed(() => {
+  switch (currentView.value) {
+    case "schedule":
+      return "Расписание"
+    case "notes":
+      return "Календарь заметок"
+    case "allNotes":
+      return "Заметки по предметам"
+  }
+})
+
+const viewIcon = computed(() => {
+  switch (currentView.value) {
+    case "schedule":
+      return "i-lucide-graduation-cap"
+    case "notes":
+      return "i-lucide-calendar-days"
+    case "allNotes":
+      return "i-lucide-book-marked"
+  }
+})
 
 // One-time tooltip for the new calendar in menu
 const { tooltipsEnabled } = useFirstLaunch()
@@ -42,8 +66,8 @@ const maybeShowMenuTooltip = () => {
   }, 1500)
 }
 
-watch([tooltipsEnabled, showTutorials], (v) => {
-  if (v) maybeShowMenuTooltip()
+watch([tooltipsEnabled, showTutorials], ([ttEnabled, showT]) => {
+  if (ttEnabled || showT) maybeShowMenuTooltip()
 })
 
 onMounted(() => {
@@ -68,12 +92,13 @@ onBeforeUnmount(() => {
           <UButton
             color="neutral"
             variant="ghost"
-            class="group !px-1 !py-1 text-lg font-bold"
+            class="group !px-1 !py-1 text-lg font-bold min-w-0 max-w-[70vw]"
           >
-            {{ viewLabel }}
+            <UIcon :name="viewIcon" class="h-5 w-5 shrink-0" />
+            <span class="truncate min-w-0">{{ viewLabel }}</span>
             <UIcon
               name="i-lucide-chevron-down"
-              class="h-5 w-5 transition-transform group-data-[state=open]:rotate-180"
+              class="h-5 w-5 shrink-0 transition-transform group-data-[state=open]:rotate-180"
             />
           </UButton>
         </UDropdownMenu>
