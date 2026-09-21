@@ -5,8 +5,9 @@ export interface MonthlyEntry {
   type: string
   day: string
   time: string
-  firstDate: string
-  intervalWeeks: number
+  firstDate?: string
+  intervalWeeks?: number
+  dates?: string[]
   note: string
 }
 
@@ -549,6 +550,12 @@ export const useSchedule = () => {
     if (hasManualSchedule) {
       if (lesson.monthlyKey && ms[lesson.monthlyKey]) {
         const entry = ms[lesson.monthlyKey]
+        // Явный список дат — точный вариант (для неравномерных интервалов).
+        if (entry.dates && entry.dates.length > 0) {
+          return entry.dates.some(
+            (d) => getWeekNumberForDate(d) === weekNumber,
+          )
+        }
         const interval = entry.intervalWeeks || 4
         const firstWeek = getWeekNumberForDate(entry.firstDate)
         if (firstWeek === null) return false
