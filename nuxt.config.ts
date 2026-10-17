@@ -44,6 +44,13 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   modules: ["@nuxt/ui", "@nuxt/scripts", "motion-v/nuxt"],
   css: ["~/assets/css/main.css"],
+  icon: {
+    serverBundle: "local",
+    clientBundle: {
+      scan: true,
+      sizeLimitKb: 512,
+    },
+  },
   ssr: false,
   colorMode: {
     preference: "system",
