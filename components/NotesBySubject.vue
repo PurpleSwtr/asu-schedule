@@ -43,16 +43,24 @@ const handleRemove = (index: number) => {
       <div class="mb-4">
         <h2 class="text-lg font-bold">Заметки по предметам</h2>
         <p class="text-xs text-(--ui-text-muted)">
-          {{ currentGroup }} · {{ total }}
+          {{ currentGroup }} ·
+          <AnimatedNumber :value="total" />
           {{ total === 1 ? "заметка" : "заметок" }}
         </p>
       </div>
 
       <div v-if="total === 0" class="mt-10 text-center">
-        <UIcon
-          name="i-lucide-sticky-note"
-          class="mb-2 h-10 w-10 text-(--ui-text-muted)"
-        />
+        <Motion
+          as="span"
+          class="inline-flex mb-2"
+          :animate="{ y: [0, -5, 0] }"
+          :transition="{ duration: 2.6, repeat: Infinity, ease: 'easeInOut' }"
+        >
+          <UIcon
+            name="i-lucide-sticky-note"
+            class="h-10 w-10 text-(--ui-text-muted)"
+          />
+        </Motion>
         <p class="text-sm text-(--ui-text-muted)">Пока нет ни одной заметки</p>
       </div>
 
@@ -69,7 +77,7 @@ const handleRemove = (index: number) => {
             </span>
             <h3 class="text-sm font-semibold">{{ s.subject }}</h3>
             <span class="text-xs text-(--ui-text-muted)">
-              {{ s.notes.length }}
+              <AnimatedNumber :value="s.notes.length" />
             </span>
           </div>
 
@@ -96,7 +104,7 @@ const handleRemove = (index: number) => {
             </span>
             <h3 class="text-sm font-semibold">Заметки на день</h3>
             <span class="text-xs text-(--ui-text-muted)">
-              {{ grouped.dayNotes.length }}
+              <AnimatedNumber :value="grouped.dayNotes.length" />
             </span>
           </div>
 
@@ -123,7 +131,7 @@ const handleRemove = (index: number) => {
             </span>
             <h3 class="text-sm font-semibold">Другое</h3>
             <span class="text-xs text-(--ui-text-muted)">
-              {{ grouped.other.length }}
+              <AnimatedNumber :value="grouped.other.length" />
             </span>
           </div>
 

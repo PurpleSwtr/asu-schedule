@@ -172,7 +172,10 @@ const selectDay = (cell: { date: Date; key: string }) => {
             class="aspect-square min-h-0"
           >
             <template v-if="cell">
-              <button
+              <Motion
+                as="button"
+                :while-press="{ scale: 0.9 }"
+                :transition="{ type: 'spring', stiffness: 500, damping: 30 }"
                 class="relative w-full h-full flex flex-col items-center justify-center rounded-lg text-sm transition-colors"
                 :class="[
                   isToday(cell.date) ? 'bg-(--ui-color-primary-50)' : '',
@@ -200,16 +203,20 @@ const selectDay = (cell: { date: Date; key: string }) => {
                   v-if="dayNotesCount(cell.key) > 0"
                   class="flex flex-wrap items-center justify-center gap-0.5 mt-1 max-w-full overflow-hidden"
                 >
-                  <span
+                  <Motion
                     v-for="n in dayNotesList(cell.key)"
                     :key="n.note.text"
+                    as="span"
+                    :initial="{ scale: 0 }"
+                    :animate="{ scale: 1 }"
+                    :transition="{ type: 'spring', stiffness: 600, damping: 20 }"
                     class="h-1.5 w-1.5 rounded-full"
                     :style="{
                       backgroundColor: noteColorStyle(n.note.color).borderColor,
                     }"
                   />
                 </div>
-              </button>
+              </Motion>
             </template>
           </div>
         </template>
@@ -234,10 +241,17 @@ const selectDay = (cell: { date: Date; key: string }) => {
         v-else-if="Object.keys(allNotes).length === 0"
         class="mt-8 text-center"
       >
-        <UIcon
-          name="i-lucide-sticky-note"
-          class="h-10 w-10 text-(--ui-text-muted) mb-2"
-        />
+        <Motion
+          as="span"
+          class="inline-flex mb-2"
+          :animate="{ y: [0, -5, 0] }"
+          :transition="{ duration: 2.6, repeat: Infinity, ease: 'easeInOut' }"
+        >
+          <UIcon
+            name="i-lucide-sticky-note"
+            class="h-10 w-10 text-(--ui-text-muted)"
+          />
+        </Motion>
         <p class="text-sm text-(--ui-text-muted)">Пока нет ни одной заметки</p>
       </div>
     </div>

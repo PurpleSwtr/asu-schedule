@@ -110,16 +110,25 @@ onBeforeUnmount(() => {
             @click="closeModal"
           />
         </div>
-        <div
+        <Motion
+          as="div"
           class="space-y-3 overflow-y-auto pr-1 pb-2"
           style="max-height: calc(100vh - 220px)"
+          initial="initial"
+          animate="enter"
+          :variants="{ enter: { transition: { staggerChildren: 0.06 } } }"
         >
-          <AnnouncementBlock
+          <Motion
             v-for="ann in currentList"
             :key="ann.id"
-            :announcement="ann"
-          />
-        </div>
+            :variants="{
+              initial: { opacity: 0, y: 8 },
+              enter: { opacity: 1, y: 0 },
+            }"
+          >
+            <AnnouncementBlock :announcement="ann" />
+          </Motion>
+        </Motion>
       </div>
     </template>
   </UModal>

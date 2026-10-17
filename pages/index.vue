@@ -9,6 +9,37 @@ const scheduleSwiper = ref<any>(null)
 
 const { currentView } = useAppView()
 
+const VIEW_ORDER: Record<string, number> = {
+  schedule: 0,
+  notes: 1,
+  allNotes: 2,
+}
+const viewDirection = ref(1)
+watch(currentView, (nv, ov) => {
+  viewDirection.value =
+    (VIEW_ORDER[nv] ?? 0) >= (VIEW_ORDER[ov] ?? 0) ? 1 : -1
+})
+
+const viewVariants = {
+  initial: (dir: number) => ({
+    opacity: 0,
+    y: dir > 0 ? 32 : -32,
+    scale: 0.97,
+  }),
+  enter: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: { type: "spring", stiffness: 260, damping: 26 },
+  },
+  exit: (dir: number) => ({
+    opacity: 0,
+    y: dir > 0 ? -24 : 24,
+    scale: 0.98,
+    transition: { duration: 0.18, ease: [0.4, 0, 1, 1] },
+  }),
+}
+
 const {
   isLoading,
   error,
@@ -22,6 +53,11 @@ const {
   setDay,
   days,
 } = useSchedule()
+
+const weekDirection = ref(1)
+watch(currentWeek, (nv, ov) => {
+  weekDirection.value = nv >= ov ? 1 : -1
+})
 
 const {
   load: loadNotes,
@@ -219,16 +255,33 @@ watch(
       @toggle-settings="settingsOpen = true"
     />
 
-    <NotesCalendar
-      v-if="currentView === 'notes'"
-      class="flex-1 min-h-0"
-      @open="openNotesForDate"
-    />
+    <AnimatePresence
+      mode="wait"
+      :initial="false"
+      :custom="viewDirection"
+    >
+      <Motion
+        :key="currentView"
+        class="flex-1 min-h-0 flex flex-col"
+        :custom="viewDirection"
+        :variants="viewVariants"
+        initial="initial"
+        animate="enter"
+        exit="exit"
+      >
+        <NotesCalendar
+          v-if="currentView === 'notes'"
+          class="flex-1 min-h-0"
+          @open="openNotesForDate"
+        />
 
-    <NotesBySubject v-else-if="currentView === 'allNotes'" class="flex-1 min-h-0" />
+        <NotesBySubject
+          v-else-if="currentView === 'allNotes'"
+          class="flex-1 min-h-0"
+        />
 
-    <template v-else>
-      <template v-if="isLoading || error">
+        <template v-else>
+          <template v-if="isLoading || error">
         <div class="flex-1 flex items-center justify-center px-4">
           <UCard v-if="isLoading" class="text-center py-10 w-full max-w-sm">
             <UIcon
@@ -275,12 +328,15 @@ watch(
                   @slide-change="onSlideChange"
                 >
                   <SwiperSlide
-                    v-for="slide in scheduleSlides"
+                    v-for="(slide, slideIndex) in scheduleSlides"
                     :key="slide.name"
                     class="h-full"
                   >
                     <div class="h-full overflow-y-auto px-4 pt-1 pb-6">
-                      <div class="space-y-3 max-w-3xl mx-auto pb-2">
+                      <div
+                        :key="slide.date"
+                        class="space-y-3 max-w-3xl mx-auto pb-2"
+                      >
                         <template v-if="slide.slots.length > 0">
                           <template
                             v-for="(slot, si) in slide.slots"
@@ -296,9 +352,17 @@ watch(
                               :date="slide.date"
                               :notes="getNotes(slide.date, slot.paraNumber)"
                               :index="si"
+                              :direction="weekDirection"
+                              :active="slideIndex === selectedIndex"
                               @open-notes="openNotes(slot, slide.date)"
                             />
-                            <BreakCard v-else :slot="slot" :index="si" />
+                            <BreakCard
+                              v-else
+                              :slot="slot"
+                              :index="si"
+                              :direction="weekDirection"
+                              :active="slideIndex === selectedIndex"
+                            />
                           </template>
                         </template>
                         <UCard
@@ -308,10 +372,23 @@ watch(
                           <div
                             class="mx-auto mb-3 flex items-center justify-center h-14 w-14 rounded-full bg-(--ui-color-primary-100)"
                           >
-                            <UIcon
-                              name="i-lucide-party-popper"
-                              class="h-7 w-7 text-(--ui-primary)"
-                            />
+                            <Motion
+                              as="span"
+                              class="flex items-center justify-center"
+                              :initial="{ scale: 0, rotate: -30 }"
+                              :animate="{ scale: 1, rotate: 0 }"
+                              :transition="{
+                                type: 'spring',
+                                stiffness: 260,
+                                damping: 14,
+                                delay: 0.1,
+                              }"
+                            >
+                              <UIcon
+                                name="i-lucide-party-popper"
+                                class="h-7 w-7 text-(--ui-primary)"
+                              />
+                            </Motion>
                           </div>
                           <p class="text-lg font-semibold text-(--ui-text)">
                             Выходной!
@@ -325,10 +402,21 @@ watch(
                           </p>
                         </UCard>
                         <UCard v-else class="py-8 pt-10 text-center">
-                          <UIcon
-                            name="i-lucide-calendar-x"
-                            class="mx-auto mb-2 h-6 w-6 text-(--ui-text-muted)"
-                          />
+                          <Motion
+                            as="span"
+                            class="mx-auto mb-2 flex h-6 w-6 items-center justify-center"
+                            :animate="{ y: [0, -4, 0] }"
+                            :transition="{
+                              duration: 2.6,
+                              repeat: Infinity,
+                              ease: 'easeInOut',
+                            }"
+                          >
+                            <UIcon
+                              name="i-lucide-calendar-x"
+                              class="h-6 w-6 text-(--ui-text-muted)"
+                            />
+                          </Motion>
                           <p class="text-(--ui-text-muted)">
                             В этот день пар нет
                           </p>
@@ -393,8 +481,10 @@ watch(
             </div>
           </div>
         </Transition>
-      </template>
-    </template>
+          </template>
+        </template>
+      </Motion>
+    </AnimatePresence>
 
     <UModal v-model:open="calendarOpen">
       <template #content>

@@ -81,7 +81,7 @@ type Screen =
   | "chip-style"
 
 const history = ref<Screen[]>(["root"])
-const transitionName = ref("slide-forward")
+const direction = ref(1)
 const pickerCategory = ref<BadgeCategory | null>(null)
 
 const screen = computed(() => history.value[history.value.length - 1])
@@ -117,7 +117,7 @@ watch(
     if (v) {
       history.value = ["root"]
       pickerCategory.value = null
-      transitionName.value = "slide-forward"
+      direction.value = 1
       containerHeight.value = "auto"
       transitioning.value = true
       nextTick(() => {
@@ -131,23 +131,43 @@ const containerEl = ref<HTMLElement | null>(null)
 const containerHeight = ref<number | "auto">("auto")
 const transitioning = ref(false)
 
-const onBeforeEnter = (el: HTMLElement) => {
-  transitioning.value = false
-  nextTick(() => {
-    const natural = el.offsetHeight
-    const cap = Math.max(160, window.innerHeight - 96)
-    if (natural > cap) {
-      el.style.height = "100%"
-      containerHeight.value = cap
-    } else {
-      el.style.height = ""
-      containerHeight.value = natural
-    }
-  })
+const screenVariants = {
+  initial: (dir: number) => ({ opacity: 0, x: dir * 28 }),
+  enter: {
+    opacity: 1,
+    x: 0,
+    transition: { type: "spring", stiffness: 300, damping: 30 },
+  },
+  exit: (dir: number) => ({
+    opacity: 0,
+    x: dir * -28,
+    transition: { duration: 0.16, ease: [0.4, 0, 1, 1] },
+  }),
 }
 
+watch(screen, () => {
+  nextTick(() => {
+    const el = containerEl.value?.querySelector<HTMLElement>(
+      `[data-screen="${screen.value}"]`,
+    )
+    if (!el) return
+    transitioning.value = false
+    nextTick(() => {
+      const natural = el.scrollHeight
+      const cap = Math.max(160, window.innerHeight - 96)
+      if (natural > cap) {
+        el.style.height = `${cap}px`
+        containerHeight.value = cap
+      } else {
+        el.style.height = ""
+        containerHeight.value = natural
+      }
+    })
+  })
+})
+
 const navigate = (nextScreen: Screen | null, toBack: boolean) => {
-  transitionName.value = toBack ? "slide-back" : "slide-forward"
+  direction.value = toBack ? -1 : 1
   if (containerHeight.value === "auto" && containerEl.value) {
     transitioning.value = true
     containerHeight.value = containerEl.value.offsetHeight
@@ -599,8 +619,21 @@ const optionList = computed<UiOption[]>(() => {
               containerHeight === 'auto' ? 'auto' : containerHeight + 'px',
           }"
         >
-          <Transition :name="transitionName" @before-enter="onBeforeEnter">
-            <div :key="screen" class="overflow-y-auto pr-1 space-y-1">
+          <AnimatePresence
+            mode="popLayout"
+            :initial="false"
+            :custom="direction"
+          >
+            <Motion
+              :key="screen"
+              :data-screen="screen"
+              :custom="direction"
+              :variants="screenVariants"
+              initial="initial"
+              animate="enter"
+              exit="exit"
+              class="overflow-y-auto pr-1 space-y-1"
+            >
               <!-- ROOT -->
               <template v-if="screen === 'root'">
                 <button
@@ -1162,47 +1195,10 @@ const optionList = computed<UiOption[]>(() => {
                   />
                 </div>
               </template>
-            </div>
-          </Transition>
+            </Motion>
+          </AnimatePresence>
         </div>
       </div>
     </template>
   </UModal>
 </template>
-
-<style scoped>
-.slide-forward-enter-from {
-  transform: translateX(60px);
-  opacity: 0;
-}
-.slide-forward-leave-to {
-  transform: translateX(-60px);
-  opacity: 0;
-}
-
-.slide-back-enter-from {
-  transform: translateX(-60px);
-  opacity: 0;
-}
-.slide-back-leave-to {
-  transform: translateX(60px);
-  opacity: 0;
-}
-
-.slide-forward-enter-active,
-.slide-back-enter-active {
-  transition:
-    transform 0.18s ease,
-    opacity 0.18s ease;
-}
-
-.slide-forward-leave-active,
-.slide-back-leave-active {
-  position: absolute;
-  width: 100%;
-  pointer-events: none;
-  transition:
-    transform 0.18s ease,
-    opacity 0.18s ease;
-}
-</style>

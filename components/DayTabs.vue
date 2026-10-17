@@ -46,10 +46,13 @@ const onUpdate = (index: number) => {
     ref="scrollEl"
     class="flex overflow-x-auto scrollbar-none gap-1 -mx-1 px-1 snap-x snap-mandatory"
   >
-    <button
+    <Motion
       v-for="(d, i) in items"
       :key="i"
-      :ref="(el: any) => { if (el) btnEls[i] = el }"
+      as="button"
+      :ref="(el: any) => { if (el) btnEls[i] = el.$el ?? el }"
+      :while-press="{ scale: 0.94 }"
+      :transition="{ type: 'spring', stiffness: 500, damping: 30 }"
       class="relative snap-center shrink-0 rounded-lg px-3 py-2 text-sm font-medium transition-colors whitespace-nowrap"
       :class="selectedIndex === i
         ? 'text-white'
@@ -63,6 +66,6 @@ const onUpdate = (index: number) => {
         :transition="{ type: 'spring', stiffness: 500, damping: 40 }"
       />
       <span class="relative z-10">{{ d.label }}</span>
-    </button>
+    </Motion>
   </div>
 </template>

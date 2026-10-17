@@ -47,10 +47,13 @@ const onUpdate = (number: number) => {
   <div
     class="flex overflow-x-auto scrollbar-none gap-2 -mx-1 px-1 snap-x snap-mandatory"
   >
-    <button
+    <Motion
       v-for="(w, i) in items"
       :key="w.number"
-      :ref="(el: any) => { if (el) btnEls[i] = el }"
+      as="button"
+      :ref="(el: any) => { if (el) btnEls[i] = el.$el ?? el }"
+      :while-press="{ scale: 0.96 }"
+      :transition="{ type: 'spring', stiffness: 500, damping: 30 }"
       class="snap-center shrink-0 relative rounded-xl px-4 py-2.5 min-w-[7rem] text-center transition-colors"
       :class="
         currentWeek === w.number
@@ -77,6 +80,6 @@ const onUpdate = (number: number) => {
         {{ w.typeLabel }}
       </span>
       <span class="relative z-10 block text-xs mt-0.5 opacity-80">{{ w.dates }}</span>
-    </button>
+    </Motion>
   </div>
 </template>

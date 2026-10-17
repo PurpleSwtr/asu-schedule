@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 import type { Lesson } from '~/composables/useSchedule'
 import type { LessonNote } from '~/composables/useLessonNotes'
 
@@ -8,13 +8,37 @@ const props = defineProps<{
   date?: string
   notes?: LessonNote[]
   index?: number
+  direction?: number
+  active?: boolean
 }>()
 
 const emit = defineEmits<{
   (e: 'open-notes'): void
 }>()
 
-const entranceDelay = computed(() => Math.min(props.index ?? 0, 8) * 0.045)
+const entranceDelay = computed(() => Math.min(props.index ?? 0, 10) * 0.06)
+const entranceY = computed(() => 28 * (props.direction ?? 1))
+
+const shown = ref(false)
+let resetTimer: ReturnType<typeof setTimeout> | undefined
+
+watch(
+  () => props.active,
+  (active) => {
+    clearTimeout(resetTimer)
+    if (active) {
+      shown.value = false
+      requestAnimationFrame(() => {
+        shown.value = true
+      })
+    } else {
+      resetTimer = setTimeout(() => {
+        shown.value = false
+      }, 400)
+    }
+  },
+  { immediate: true },
+)
 
 const { TIME_SLOTS } = useSchedule()
 const { styleForType, categoryForType, styleForSchedule } = useBadgeColors()
@@ -45,14 +69,18 @@ const timeRange = computed(() => {
 <template>
   <Motion
     class="w-full"
-    :initial="{ opacity: 0, y: 14 }"
-    :animate="{ opacity: 1, y: 0 }"
-    :transition="{
-      duration: 0.34,
-      ease: [0.22, 1, 0.36, 1],
-      delay: entranceDelay,
-    }"
-    :while-press="{ scale: 0.985 }"
+    :initial="false"
+    :animate="
+      shown
+        ? { opacity: 1, y: 0, scale: 1 }
+        : { opacity: 0, y: entranceY, scale: 0.96 }
+    "
+    :transition="
+      shown
+        ? { type: 'spring', stiffness: 260, damping: 22, delay: entranceDelay }
+        : { duration: 0 }
+    "
+    :while-press="{ scale: 0.97 }"
   >
   <UCard class="w-full">
     <div class="flex items-start justify-between gap-3">
