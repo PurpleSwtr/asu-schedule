@@ -7,11 +7,14 @@ const props = defineProps<{
   lesson: Lesson
   date?: string
   notes?: LessonNote[]
+  index?: number
 }>()
 
 const emit = defineEmits<{
   (e: 'open-notes'): void
 }>()
+
+const entranceDelay = computed(() => Math.min(props.index ?? 0, 8) * 0.045)
 
 const { TIME_SLOTS } = useSchedule()
 const { styleForType, categoryForType, styleForSchedule } = useBadgeColors()
@@ -40,6 +43,17 @@ const timeRange = computed(() => {
 </script>
 
 <template>
+  <Motion
+    class="w-full"
+    :initial="{ opacity: 0, y: 14 }"
+    :animate="{ opacity: 1, y: 0 }"
+    :transition="{
+      duration: 0.34,
+      ease: [0.22, 1, 0.36, 1],
+      delay: entranceDelay,
+    }"
+    :while-press="{ scale: 0.985 }"
+  >
   <UCard class="w-full">
     <div class="flex items-start justify-between gap-3">
       <div class="min-w-0 flex-1">
@@ -119,4 +133,5 @@ const timeRange = computed(() => {
       />
     </div>
   </UCard>
+  </Motion>
 </template>

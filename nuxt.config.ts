@@ -42,7 +42,7 @@ export default defineNuxtConfig({
   compatibilityDate: "2025-07-15",
   compatibilityVersion: 3,
   devtools: { enabled: true },
-  modules: ["@nuxt/ui", "@nuxt/scripts"],
+  modules: ["@nuxt/ui", "@nuxt/scripts", "motion-v/nuxt"],
   css: ["~/assets/css/main.css"],
   ssr: false,
   colorMode: {

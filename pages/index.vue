@@ -283,7 +283,7 @@ watch(
                       <div class="space-y-3 max-w-3xl mx-auto pb-2">
                         <template v-if="slide.slots.length > 0">
                           <template
-                            v-for="slot in slide.slots"
+                            v-for="(slot, si) in slide.slots"
                             :key="
                               'break' in slot && slot.type === 'break'
                                 ? `break-${slot.fromPara}-${slot.toPara}`
@@ -295,9 +295,10 @@ watch(
                               :lesson="slot"
                               :date="slide.date"
                               :notes="getNotes(slide.date, slot.paraNumber)"
+                              :index="si"
                               @open-notes="openNotes(slot, slide.date)"
                             />
-                            <BreakCard v-else :slot="slot" />
+                            <BreakCard v-else :slot="slot" :index="si" />
                           </template>
                         </template>
                         <UCard

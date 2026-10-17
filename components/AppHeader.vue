@@ -94,8 +94,20 @@ onBeforeUnmount(() => {
             variant="ghost"
             class="group !px-1 !py-1 text-lg font-bold min-w-0 max-w-[70vw]"
           >
-            <UIcon :name="viewIcon" class="h-5 w-5 shrink-0" />
-            <span class="truncate min-w-0">{{ viewLabel }}</span>
+            <AnimatePresence mode="wait" :initial="false">
+              <Motion
+                :key="currentView"
+                as="span"
+                class="flex items-center gap-1.5 min-w-0"
+                :initial="{ opacity: 0, y: 6 }"
+                :animate="{ opacity: 1, y: 0 }"
+                :exit="{ opacity: 0, y: -6 }"
+                :transition="{ duration: 0.14, ease: 'easeOut' }"
+              >
+                <UIcon :name="viewIcon" class="h-5 w-5 shrink-0" />
+                <span class="truncate min-w-0">{{ viewLabel }}</span>
+              </Motion>
+            </AnimatePresence>
             <UIcon
               name="i-lucide-chevron-down"
               class="h-5 w-5 shrink-0 transition-transform group-data-[state=open]:rotate-180"

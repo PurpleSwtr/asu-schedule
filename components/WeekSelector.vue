@@ -54,7 +54,7 @@ const onUpdate = (number: number) => {
       class="snap-center shrink-0 relative rounded-xl px-4 py-2.5 min-w-[7rem] text-center transition-colors"
       :class="
         currentWeek === w.number
-          ? 'bg-(--ui-primary) text-white'
+          ? 'text-white'
           : w.isPast
             ? ''
             : 'bg-(--ui-bg-elevated) text-(--ui-text) hover:bg-(--ui-bg-accented)'
@@ -62,15 +62,21 @@ const onUpdate = (number: number) => {
       :style="pastStyle(w.isPast && currentWeek !== w.number)"
       @click="onUpdate(w.number)"
     >
+      <Motion
+        v-if="currentWeek === w.number"
+        layout-id="week-pill"
+        class="absolute inset-0 rounded-xl bg-(--ui-primary)"
+        :transition="{ type: 'spring', stiffness: 500, damping: 40 }"
+      />
       <UIcon
         v-if="w.isPast"
         name="i-lucide-check"
-        class="absolute top-1 right-1 h-3.5 w-3.5"
+        class="absolute top-1 right-1 h-3.5 w-3.5 z-10"
       />
-      <span class="block font-bold text-base leading-tight">
+      <span class="relative z-10 block font-bold text-base leading-tight">
         {{ w.typeLabel }}
       </span>
-      <span class="block text-xs mt-0.5 opacity-80">{{ w.dates }}</span>
+      <span class="relative z-10 block text-xs mt-0.5 opacity-80">{{ w.dates }}</span>
     </button>
   </div>
 </template>

@@ -50,13 +50,19 @@ const onUpdate = (index: number) => {
       v-for="(d, i) in items"
       :key="i"
       :ref="(el: any) => { if (el) btnEls[i] = el }"
-      class="snap-center shrink-0 rounded-lg px-3 py-2 text-sm font-medium transition-colors whitespace-nowrap"
+      class="relative snap-center shrink-0 rounded-lg px-3 py-2 text-sm font-medium transition-colors whitespace-nowrap"
       :class="selectedIndex === i
-        ? 'bg-(--ui-primary) text-white'
+        ? 'text-white'
         : 'bg-(--ui-bg-elevated) text-(--ui-text) hover:bg-(--ui-bg-accented)'"
       @click="onUpdate(i)"
     >
-      {{ d.label }}
+      <Motion
+        v-if="selectedIndex === i"
+        layout-id="day-tab-pill"
+        class="absolute inset-0 rounded-lg bg-(--ui-primary)"
+        :transition="{ type: 'spring', stiffness: 500, damping: 40 }"
+      />
+      <span class="relative z-10">{{ d.label }}</span>
     </button>
   </div>
 </template>

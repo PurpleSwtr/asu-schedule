@@ -26,6 +26,16 @@ const editingIndex = ref<number | null>(null)
 
 const isEditing = computed(() => editingIndex.value !== null)
 
+const keyedNotes = computed(() => {
+  const seen: Record<string, number> = {}
+  return props.notes.map((note, index) => {
+    const base = `${note.text}|${note.icon}|${note.color}`
+    const count = seen[base] ?? 0
+    seen[base] = count + 1
+    return { note, index, key: `${base}|${count}` }
+  })
+})
+
 watch(() => props.open, (open) => {
   if (open) {
     editingIndex.value = null
@@ -94,23 +104,30 @@ const save = () => {
         </p>
 
         <div v-if="notes.length" class="space-y-2 mb-4">
-          <div
-            v-for="(note, i) in notes"
-            :key="i"
-            class="flex items-start gap-2 border rounded-lg px-3 py-2"
-            :style="noteColorStyle(note.color)"
-          >
-            <UIcon
-              :name="note.icon"
-              class="h-5 w-5 shrink-0 mt-0.5"
-              :style="{ color: noteColorHex(note.color) }"
-            />
-            <p class="text-sm flex-1 break-words whitespace-pre-wrap">{{ note.text }}</p>
-            <div class="flex items-center gap-0.5 shrink-0 mt-0.5">
-              <UButton icon="i-lucide-pencil" color="neutral" variant="ghost" size="xs" aria-label="Редактировать заметку" @click="startEdit(i)" />
-              <UButton icon="i-lucide-trash-2" color="error" variant="ghost" size="xs" aria-label="Удалить заметку" @click="emit('remove', i)" />
-            </div>
-          </div>
+          <AnimatePresence>
+            <Motion
+              v-for="item in keyedNotes"
+              :key="item.key"
+              layout
+              class="flex items-start gap-2 border rounded-lg px-3 py-2"
+              :style="noteColorStyle(item.note.color)"
+              :initial="{ opacity: 0, scale: 0.9, y: 8 }"
+              :animate="{ opacity: 1, scale: 1, y: 0 }"
+              :exit="{ opacity: 0, scale: 0.9, y: -8 }"
+              :transition="{ duration: 0.18, ease: 'easeOut' }"
+            >
+              <UIcon
+                :name="item.note.icon"
+                class="h-5 w-5 shrink-0 mt-0.5"
+                :style="{ color: noteColorHex(item.note.color) }"
+              />
+              <p class="text-sm flex-1 break-words whitespace-pre-wrap">{{ item.note.text }}</p>
+              <div class="flex items-center gap-0.5 shrink-0 mt-0.5">
+                <UButton icon="i-lucide-pencil" color="neutral" variant="ghost" size="xs" aria-label="Редактировать заметку" @click="startEdit(item.index)" />
+                <UButton icon="i-lucide-trash-2" color="error" variant="ghost" size="xs" aria-label="Удалить заметку" @click="emit('remove', item.index)" />
+              </div>
+            </Motion>
+          </AnimatePresence>
         </div>
         <div v-else class="flex flex-col items-center py-4 mb-4">
           <UIcon name="i-lucide-sticky-note" class="h-8 w-8 text-(--ui-text-muted) mb-2" />

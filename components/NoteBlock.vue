@@ -14,9 +14,10 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <div
+  <Motion
     class="cursor-pointer rounded-lg border px-3 py-2 transition-colors hover:bg-(--ui-bg-accented)"
     :style="noteColorStyle(note.color)"
+    :while-press="{ scale: 0.98, transition: { type: 'spring', stiffness: 400, damping: 30 } }"
     @click="emit('click')"
   >
     <template v-if="meta">
@@ -41,5 +42,5 @@ const emit = defineEmits<{
       />
       <p class="text-sm flex-1 break-words whitespace-pre-wrap">{{ note.text }}</p>
     </div>
-  </div>
+  </Motion>
 </template>
