@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed } from 'vue'
 import type { Lesson } from '~/composables/useSchedule'
 import type { LessonNote } from '~/composables/useLessonNotes'
 
@@ -19,26 +19,7 @@ const emit = defineEmits<{
 const entranceDelay = computed(() => Math.min(props.index ?? 0, 10) * 0.06)
 const entranceY = computed(() => 28 * (props.direction ?? 1))
 
-const shown = ref(false)
-let resetTimer: ReturnType<typeof setTimeout> | undefined
-
-watch(
-  () => props.active,
-  (active) => {
-    clearTimeout(resetTimer)
-    if (active) {
-      shown.value = false
-      requestAnimationFrame(() => {
-        shown.value = true
-      })
-    } else {
-      resetTimer = setTimeout(() => {
-        shown.value = false
-      }, 400)
-    }
-  },
-  { immediate: true },
-)
+const shown = useReveal(() => props.active)
 
 const { TIME_SLOTS } = useSchedule()
 const { styleForType, categoryForType, styleForSchedule } = useBadgeColors()

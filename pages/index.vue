@@ -211,6 +211,7 @@ const onSlideChange = (swiper: any) => {
     // Sunday (6) -> Monday (0): advance to next week
     if (lastRealIndex === 6 && cur === 0) {
       setWeek(currentWeek.value + 1)
+      setDay(day)
       lastRealIndex = cur
       scheduleSwiper.value?.update()
       return
@@ -218,6 +219,7 @@ const onSlideChange = (swiper: any) => {
     // Monday (0) -> Sunday (6): go back to previous week
     if (lastRealIndex === 0 && cur === 6) {
       setWeek(currentWeek.value - 1)
+      setDay(day)
       lastRealIndex = cur
       scheduleSwiper.value?.update()
       return
@@ -365,62 +367,15 @@ watch(
                             />
                           </template>
                         </template>
-                        <UCard
+                        <DayEmptyCard
                           v-else-if="slide.name === 'Воскресенье'"
-                          class="py-6 pt-10 text-center"
-                        >
-                          <div
-                            class="mx-auto mb-3 flex items-center justify-center h-14 w-14 rounded-full bg-(--ui-color-primary-100)"
-                          >
-                            <Motion
-                              as="span"
-                              class="flex items-center justify-center"
-                              :initial="{ scale: 0, rotate: -30 }"
-                              :animate="{ scale: 1, rotate: 0 }"
-                              :transition="{
-                                type: 'spring',
-                                stiffness: 260,
-                                damping: 14,
-                                delay: 0.1,
-                              }"
-                            >
-                              <UIcon
-                                name="i-lucide-party-popper"
-                                class="h-7 w-7 text-(--ui-primary)"
-                              />
-                            </Motion>
-                          </div>
-                          <p class="text-lg font-semibold text-(--ui-text)">
-                            Выходной!
-                          </p>
-                          <p class="text-sm text-(--ui-text-muted) mt-1">
-                            Отдыхайте и набирайтесь сил.
-                          </p>
-
-                          <p class="text-xs text-(--ui-text-muted) mt-5">
-                            ( А то сессия скоро, так-то )
-                          </p>
-                        </UCard>
-                        <UCard v-else class="py-8 pt-10 text-center">
-                          <Motion
-                            as="span"
-                            class="mx-auto mb-2 flex h-6 w-6 items-center justify-center"
-                            :animate="{ y: [0, -4, 0] }"
-                            :transition="{
-                              duration: 2.6,
-                              repeat: Infinity,
-                              ease: 'easeInOut',
-                            }"
-                          >
-                            <UIcon
-                              name="i-lucide-calendar-x"
-                              class="h-6 w-6 text-(--ui-text-muted)"
-                            />
-                          </Motion>
-                          <p class="text-(--ui-text-muted)">
-                            В этот день пар нет
-                          </p>
-                        </UCard>
+                          variant="weekend"
+                          :active="slideIndex === selectedIndex"
+                        />
+                        <DayEmptyCard
+                          v-else
+                          :active="slideIndex === selectedIndex"
+                        />
 
 <NoteBlock
                         v-for="(n, ni) in dayNotes(slide.date)"
