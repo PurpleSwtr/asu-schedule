@@ -5,6 +5,7 @@ const { init: initFirstLaunch } = useFirstLaunch()
 const { init: initAppSettings, confettiOnLaunch } = useAppSettings()
 const { init: initBadgeColors } = useBadgeColors()
 const { fire } = useConfetti()
+const { baseURL } = useRuntimeConfig().app
 
 onMounted(() => {
   init()
@@ -29,6 +30,10 @@ onMounted(() => {
       700,
     )
   }
+})
+
+useHead({
+  link: [{ rel: "icon", type: "image/x-icon", href: `${baseURL}favicon.ico` }],
 })
 </script>
 
