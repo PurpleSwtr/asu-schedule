@@ -3,6 +3,7 @@ import type { Lesson } from "~/composables/useSchedule"
 import type { LessonNote } from "~/composables/useLessonNotes"
 import { DAY_NOTE_PARA } from "~/composables/useLessonNotes"
 import { Swiper, SwiperSlide } from "swiper/vue"
+import { animate } from "motion-v"
 import "swiper/css"
 
 const scheduleSwiper = ref<any>(null)
@@ -185,6 +186,51 @@ const semesterProgress = computed(() => {
   return total > 0 ? Math.round((passed / total) * 100) : 0
 })
 
+const animatedProgress = ref(0)
+const progressDisplay = computed(() => Math.round(animatedProgress.value))
+const progressCelebrate = ref(false)
+let progressIntroStarted = false
+
+const progressBarAnimation = computed(() =>
+  progressCelebrate.value ? { scale: [1, 1.02, 1] } : { scale: 1 },
+)
+
+const playProgressIntro = async () => {
+  if (progressIntroStarted) return
+  await nextTick()
+
+  const target = semesterProgress.value
+  progressIntroStarted = true
+
+  if (target <= 0) {
+    animatedProgress.value = target
+    return
+  }
+
+  animate(0, target, {
+    duration: 1.15,
+    ease: [0.16, 1, 0.3, 1],
+    onUpdate: (value) => {
+      animatedProgress.value = Math.min(value, target)
+    },
+    onComplete: () => {
+      animatedProgress.value = target
+      progressCelebrate.value = true
+    },
+  })
+}
+
+watch(
+  [isLoading, currentView],
+  async ([loading, view]) => {
+    if (!loading && view === "schedule" && !error.value) {
+      await nextTick()
+      playProgressIntro()
+    }
+  },
+  { flush: "post" },
+)
+
 const scheduleSlides = computed(() =>
   weekDaysWithDates.value.map((d) => ({
     name: d.name,
@@ -322,37 +368,42 @@ watch(
               class="w-full lg:max-w-3xl flex flex-col min-h-0 lg:min-h-0 lg:max-h-[92dvh]"
             >
               <div class="shrink-0 space-y-3 px-4 pt-4 pb-3">
-                <div class="relative">
-                  <UProgress
-                    :model-value="semesterProgress"
-                    :max="100"
-                    size="lg"
-                    color="primary"
-                    aria-label="Прогресс семестра"
-                  />
-                  <span
-                    class="pointer-events-none absolute inset-0 flex items-center justify-center"
-                  >
+                <Motion
+                  :animate="progressBarAnimation"
+                  :transition="{ duration: 0.35, ease: 'easeOut' }"
+                >
+                  <div ref="progressBarRef" class="relative">
+                    <UProgress
+                      :model-value="animatedProgress"
+                      :max="100"
+                      size="lg"
+                      color="primary"
+                      aria-label="Прогресс семестра"
+                    />
                     <span
-                      class="text-[10px] font-semibold leading-none text-black dark:text-white"
+                      class="pointer-events-none absolute inset-0 flex items-center justify-center"
                     >
-                      {{ semesterProgress }}% семестра прошло
+                      <span
+                        class="text-[10px] font-semibold leading-none text-black dark:text-white"
+                      >
+                        {{ progressDisplay }}% семестра прошло
+                      </span>
                     </span>
-                  </span>
-                  <span
-                    class="pointer-events-none absolute inset-0 flex items-center justify-center overflow-hidden"
-                    :style="{
-                      clipPath: `inset(0 ${100 - semesterProgress}% 0 0)`,
-                    }"
-                    aria-hidden="true"
-                  >
                     <span
-                      class="text-[10px] font-semibold leading-none text-white"
+                      class="pointer-events-none absolute inset-0 flex items-center justify-center overflow-hidden"
+                      :style="{
+                        clipPath: `inset(0 ${100 - animatedProgress}% 0 0)`,
+                      }"
+                      aria-hidden="true"
                     >
-                      {{ semesterProgress }}% семестра прошло
+                      <span
+                        class="text-[10px] font-semibold leading-none text-white"
+                      >
+                        {{ progressDisplay }}% семестра прошло
+                      </span>
                     </span>
-                  </span>
-                </div>
+                  </div>
+                </Motion>
 
                 <WeekSelector @change="handleWeekChange" />
 
