@@ -48,6 +48,8 @@ const {
   daySchedule,
   getDaySlots,
   weekDaysWithDates,
+  realWeekNumber,
+  weeks,
   loadSchedule,
   setWeek,
   setDay,
@@ -174,6 +176,14 @@ const dismissNotesHint = () => {
 }
 
 const DAY_TABS = days.value
+
+const totalWeeks = computed(() => weeks.value.length || 18)
+
+const semesterProgress = computed(() => {
+  const total = totalWeeks.value
+  const passed = Math.min(Math.max(realWeekNumber.value, 0), total)
+  return total > 0 ? Math.round((passed / total) * 100) : 0
+})
 
 const scheduleSlides = computed(() =>
   weekDaysWithDates.value.map((d) => ({
@@ -312,6 +322,38 @@ watch(
               class="w-full lg:max-w-3xl flex flex-col min-h-0 lg:min-h-0 lg:max-h-[92dvh]"
             >
               <div class="shrink-0 space-y-3 px-4 pt-4 pb-3">
+                <div class="relative">
+                  <UProgress
+                    :model-value="semesterProgress"
+                    :max="100"
+                    size="lg"
+                    color="primary"
+                    aria-label="Прогресс семестра"
+                  />
+                  <span
+                    class="pointer-events-none absolute inset-0 flex items-center justify-center"
+                  >
+                    <span
+                      class="text-[10px] font-semibold leading-none text-black dark:text-white"
+                    >
+                      {{ semesterProgress }}% семестра прошло
+                    </span>
+                  </span>
+                  <span
+                    class="pointer-events-none absolute inset-0 flex items-center justify-center overflow-hidden"
+                    :style="{
+                      clipPath: `inset(0 ${100 - semesterProgress}% 0 0)`,
+                    }"
+                    aria-hidden="true"
+                  >
+                    <span
+                      class="text-[10px] font-semibold leading-none text-white"
+                    >
+                      {{ semesterProgress }}% семестра прошло
+                    </span>
+                  </span>
+                </div>
+
                 <WeekSelector @change="handleWeekChange" />
 
                 <DayTabs />
